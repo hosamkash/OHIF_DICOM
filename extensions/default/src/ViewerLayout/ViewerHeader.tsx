@@ -7,7 +7,12 @@ import { useSystem } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
 import HeaderPatientInfo from './HeaderPatientInfo';
 import { PatientInfoVisibility } from './HeaderPatientInfo/HeaderPatientInfo';
-import { preserveQueryParameters } from '@ohif/app';
+import {
+  APP_MARKETING_LANDING_PATH,
+  getDatasourceSlugFromViewerPath,
+  preserveQueryParameters,
+  OHIF_VIEWER_HOME_PATH,
+} from '@ohif/app';
 import { Types } from '@ohif/core';
 
 function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }>) {
@@ -19,19 +24,16 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
 
   const onClickReturnButton = () => {
     const { pathname } = location;
-    const dataSourceIdx = pathname.indexOf('/', 1);
-
-    const dataSourceName = pathname.substring(dataSourceIdx + 1);
-    const existingDataSource = extensionManager.getDataSources(dataSourceName);
+    const datasourceSlug = getDatasourceSlugFromViewerPath(pathname);
 
     const searchQuery = new URLSearchParams();
-    if (dataSourceIdx !== -1 && existingDataSource) {
-      searchQuery.append('datasources', pathname.substring(dataSourceIdx + 1));
+    if (datasourceSlug && extensionManager.getDataSources(datasourceSlug)?.[0]) {
+      searchQuery.append('datasources', datasourceSlug);
     }
     preserveQueryParameters(searchQuery);
 
     navigate({
-      pathname: '/',
+      pathname: OHIF_VIEWER_HOME_PATH,
       search: decodeURIComponent(searchQuery.toString()),
     });
   };
@@ -86,6 +88,7 @@ function ViewerHeader({ appConfig }: withAppTypes<{ appConfig: AppTypes.Config }
       menuOptions={menuOptions}
       isReturnEnabled={!!appConfig.showStudyList}
       onClickReturnButton={onClickReturnButton}
+      onClickBrand={() => navigate({ pathname: APP_MARKETING_LANDING_PATH })}
       WhiteLabeling={appConfig.whiteLabeling}
       Secondary={<Toolbar buttonSection="secondary" />}
       PatientInfo={

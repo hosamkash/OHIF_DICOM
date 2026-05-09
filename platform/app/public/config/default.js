@@ -3,7 +3,7 @@
 window.config = {
   name: 'config/default.js',
   routerBasename: null,
-  // whiteLabeling: {},
+  // whiteLabeling: Vigil branding is injected in platform/app/src/appInit.js unless overridden here.
   extensions: [],
   modes: [],
   customizationService: {},

@@ -1,0 +1,98 @@
+/*
+ * Landing page: explicit colors so OHIF global theme / missing Tailwind utilities
+ * do not force dark text on a dark background.
+ */
+[data-vigil-landing] {
+  background-color: #0b1120 !important;
+  color: rgb(226, 232, 240) !important;
+}
+
+[data-vigil-landing] p,
+[data-vigil-landing] li {
+  color: rgb(226, 232, 240) !important;
+}
+
+[data-vigil-landing] h1,
+[data-vigil-landing] h2 {
+  color: #ffffff !important;
+}
+
+[data-vigil-landing] .vigil-grad {
+  color: transparent !important;
+  background-image: linear-gradient(to left, #99f6e4, #ddd6fe);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+[data-vigil-landing] .vigil-aside-brand {
+  color: #5eead4 !important;
+}
+
+[data-vigil-landing] .vigil-intro-muted {
+  color: rgb(203, 213, 225) !important;
+}
+
+[data-vigil-landing] .vigil-text-white {
+  color: #ffffff !important;
+}
+
+[data-vigil-landing] .vigil-text-cyan {
+  color: #b5f5f3 !important;
+}
+
+[data-vigil-landing] .vigil-contact-label {
+  color: #94a3b8 !important;
+}
+
+[data-vigil-landing] a.vigil-contact-card {
+  color: rgb(226, 232, 240) !important;
+}
+
+[data-vigil-landing] a.vigil-contact-card:hover {
+  color: #f1f5f9 !important;
+}
+
+[data-vigil-landing] a.vigil-cta {
+  color: #ccfbf1 !important;
+}
+
+[data-vigil-landing] a.vigil-cta svg {
+  color: #ccfbf1 !important;
+  stroke: #ccfbf1 !important;
+}
+
+[data-vigil-landing] .vigil-badge-soft {
+  color: rgba(207, 250, 254, 0.9) !important;
+}
+
+[data-vigil-landing] .vigil-badge-strong {
+  color: #bae6fd !important;
+}
+
+[data-vigil-landing] .vigil-card-muted {
+  color: #94a3b8 !important;
+}
+
+[data-vigil-landing] .vigil-card-title {
+  color: #ffffff !important;
+}
+
+[data-vigil-landing] .vigil-li-marker {
+  color: #5eead4 !important;
+}
+
+[data-vigil-landing] .vigil-strong-muted {
+  color: rgb(226, 232, 240) !important;
+}
+
+[data-vigil-landing] .vigil-rose {
+  color: #fda4af !important;
+}
+
+[data-vigil-landing] .vigil-violet {
+  color: #ddd6fe !important;
+}
+
+[data-vigil-landing] .vigil-body-soft {
+  color: rgb(203, 213, 225) !important;
+}

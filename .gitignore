@@ -67,6 +67,24 @@ libs/
 # Backup files
 *~
 
+# TypeScript / ESLint caches
+*.tsbuildinfo
+**/.tsbuildinfo
+.eslintcache
+
+# Bundler cache (if present)
+.parcel-cache/
+.turbo/
+
+# Logs (generic)
+logs/
+*.log
+
+# OS / thumbnails
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
 # cornerstone3D local linking
 libs/
 link-cs3d.js

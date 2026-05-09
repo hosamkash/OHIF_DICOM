@@ -8,7 +8,9 @@ import WorkList from './WorkList';
 import Local from './Local';
 import Debug from './Debug';
 import NotFound from './NotFound';
+import VigilLandingPage from './VigilLandingPage';
 import buildModeRoutes from './buildModeRoutes';
+import { OHIF_VIEWER_HOME_PATH } from '../constants/viewerRoutes';
 import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
 import { routerBasename } from '../utils/publicUrl';
@@ -49,7 +51,7 @@ const NotFoundStudy = () => {
             Return to the{' '}
             <Link
               className="text-highlight"
-              to="/"
+              to={OHIF_VIEWER_HOME_PATH}
             >
               study list
             </Link>{' '}
@@ -120,8 +122,14 @@ const createRoutes = ({
 
   console.log('Registering worklist route', routerBasename, path);
 
-  const WorkListRoute = {
+  const LandingRoute = {
     path: '/',
+    children: VigilLandingPage,
+    private: false,
+  };
+
+  const WorkListRoute = {
+    path: OHIF_VIEWER_HOME_PATH,
     children: DataSourceWrapper,
     private: true,
     props: { children: WorkList, servicesManager, extensionManager },
@@ -130,6 +138,7 @@ const createRoutes = ({
   const customRoutes = customizationService.getCustomization('routes.customRoutes');
 
   const allRoutes = [
+    LandingRoute,
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
     ...(customRoutes?.routes || []),

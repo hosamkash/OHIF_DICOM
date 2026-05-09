@@ -19,6 +19,13 @@ import { modes as defaultModes, extensions as defaultExtensions } from './plugin
 import loadDynamicConfig from './loadDynamicConfig';
 export { history } from './utils/history';
 export { preserveQueryParameters, preserveQueryStrings } from './utils/preserveQueryParameters';
+export {
+  APP_MARKETING_LANDING_PATH,
+  getDatasourceSlugFromViewerPath,
+  OHIF_VIEWER_HOME_PATH,
+  viewerCompositeModePathname,
+  viewerModePathname,
+} from './constants/viewerRoutes';
 
 loadDynamicConfig(window.config).then(config_json => {
   // Reset Dynamic config if defined

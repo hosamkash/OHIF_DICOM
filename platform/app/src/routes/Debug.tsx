@@ -6,7 +6,7 @@ import { Icons } from '@ohif/ui-next';
 function Debug() {
   return (
     <div style={{ width: '100%', height: '100%' }}>
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className="flex h-full min-h-0 w-full items-center justify-center">
         <div className="bg-popover mx-auto space-y-2 rounded-lg py-8 px-8 drop-shadow-md">
           <img
             className="mx-auto block h-14"

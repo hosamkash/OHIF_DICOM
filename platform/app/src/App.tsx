@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
-import { BrowserRouter, type BrowserRouterProps } from 'react-router-dom';
+import { BrowserRouter, useLocation, type BrowserRouterProps } from 'react-router-dom';
 
 import Compose from './routes/Mode/Compose';
 import {
@@ -35,6 +35,7 @@ import createRoutes from './routes';
 import appInit from './appInit.js';
 import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 import { ShepherdJourneyProvider } from 'react-shepherd';
+import GlobalAppBanner from './components/GlobalAppBanner';
 import './App.css';
 
 let commandsManager: CommandsManager,
@@ -47,6 +48,23 @@ const routerFutureFlags: BrowserRouterProps['future'] = {
   v7_startTransition: true,
   v7_relativeSplatPath: true,
 };
+
+function AppBrowserShell({ authRoutes, appRoutes }: { authRoutes: React.ReactNode; appRoutes: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const isLanding = pathname === '/' || pathname === '';
+
+  return (
+    <div className="bg-background flex h-screen flex-col overflow-hidden">
+      {!isLanding && <GlobalAppBanner />}
+      <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="absolute inset-0 flex flex-col overflow-hidden">
+          {authRoutes}
+          {appRoutes}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function App({
   config = {
@@ -173,8 +191,10 @@ function App({
         basename={routerBasename}
         future={routerFutureFlags}
       >
-        {authRoutes}
-        {appRoutes}
+        <AppBrowserShell
+          authRoutes={authRoutes}
+          appRoutes={appRoutes}
+        />
       </BrowserRouter>
     </CombinedProviders>
   );

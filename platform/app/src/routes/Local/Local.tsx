@@ -7,8 +7,10 @@ import Dropzone from 'react-dropzone';
 import filesToStudies from './filesToStudies';
 
 import { extensionManager } from '../../App';
+import { OHIF_VIEWER_HOME_PATH, viewerCompositeModePathname } from '../../constants/viewerRoutes';
 
-import { Button, Icons } from '@ohif/ui-next';
+import { Button } from '@ohif/ui-next';
+import { VigilHeaderLogo } from '../../components/VigilHeaderLogo';
 
 const getLoadButton = (onDrop, text, isDir) => {
   return (
@@ -106,7 +108,8 @@ function Local({ modePath }: LocalProps) {
     studies.forEach(id => query.append('StudyInstanceUIDs', id));
     query.append('datasources', 'dicomlocal');
 
-    navigate(`/${modePath}?${decodeURIComponent(query.toString())}`);
+    const pathPrefix = modePath ? viewerCompositeModePathname(modePath) : OHIF_VIEWER_HOME_PATH;
+    navigate(`${pathPrefix}?${decodeURIComponent(query.toString())}`);
   };
 
   // Set body style
@@ -131,10 +134,10 @@ function Local({ modePath }: LocalProps) {
           {...getRootProps()}
           style={{ width: '100%', height: '100%' }}
         >
-          <div className="flex h-screen w-screen items-center justify-center">
+          <div className="flex h-full min-h-0 w-full items-center justify-center">
             <div className="bg-muted border-primary/60 mx-auto space-y-2 rounded-xl border border-dashed py-12 px-12 drop-shadow-md">
               <div className="flex items-center justify-center">
-                <Icons.OHIFLogoColorDarkBackground className="h-18" />
+                <VigilHeaderLogo variant="hero" />
               </div>
               <div className="space-y-2 py-6 text-center">
                 {dropInitiated ? (

@@ -25,6 +25,8 @@ interface HeaderProps {
   isReturnEnabled?: boolean;
   onClickReturnButton?: () => void;
   isSticky?: boolean;
+  /** When set, clicks on the logo/brand navigate here; return arrow still uses `onClickReturnButton`. Stock OHIF: omit so logo behaves like «back» when return is enabled. */
+  onClickBrand?: () => void;
   WhiteLabeling?: {
     createLogoComponentFn?: (React: any, props: any) => ReactNode;
   };
@@ -39,6 +41,7 @@ function Header({
   isReturnEnabled = true,
   onClickReturnButton,
   isSticky = false,
+  onClickBrand,
   WhiteLabeling,
   PatientInfo,
   UndoRedo,
@@ -51,6 +54,9 @@ function Header({
     }
   };
 
+  const onLogoNav =
+    onClickBrand ?? (isReturnEnabled && onClickReturnButton ? onClickReturn : undefined);
+
   return (
     <IconPresentationProvider
       size="large"
@@ -62,16 +68,46 @@ function Header({
       >
         <div className="relative h-[48px] items-center">
           <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center">
-            <div
-              className={classNames(
-                'mr-3 inline-flex items-center',
-                isReturnEnabled && 'cursor-pointer'
+            <div className="mr-3 inline-flex items-center gap-1">
+              {isReturnEnabled && (
+                <button
+                  type="button"
+                  data-cy="return-to-work-list"
+                  aria-label="Back to study list"
+                  className="text-primary hover:bg-muted inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors"
+                  onClick={() => {
+                    if (isReturnEnabled && onClickReturnButton) {
+                      onClickReturnButton();
+                    }
+                  }}
+                >
+                  <Icons.ArrowLeft className="h-7 w-7" />
+                </button>
               )}
-              onClick={onClickReturn}
-              data-cy="return-to-work-list"
-            >
-              {isReturnEnabled && <Icons.ArrowLeft className="text-primary ml-1 h-7 w-7" />}
-              <div className="ml-1">
+              <div
+                className={classNames(
+                  'ml-1 inline-flex items-center',
+                  onLogoNav && 'cursor-pointer rounded-md hover:bg-muted/60'
+                )}
+                data-cy="header-brand"
+                role={onLogoNav ? 'button' : undefined}
+                tabIndex={onLogoNav ? 0 : undefined}
+                onClick={() => {
+                  if (onLogoNav) {
+                    onLogoNav();
+                  }
+                }}
+                onKeyDown={
+                  onLogoNav
+                    ? evt => {
+                        if (evt.key === 'Enter' || evt.key === ' ') {
+                          evt.preventDefault();
+                          onLogoNav();
+                        }
+                      }
+                    : undefined
+                }
+              >
                 {WhiteLabeling?.createLogoComponentFn?.(React, props) || <Icons.OHIFLogo />}
               </div>
             </div>

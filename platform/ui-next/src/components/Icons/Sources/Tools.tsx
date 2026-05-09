@@ -657,6 +657,57 @@ export const ToolCapture = (props: IconProps) => (
   </svg>
 );
 
+/** Toolbar icon: document with PDF label — inline SVG only (no public assets). */
+export const ToolPdf = (props: IconProps) => (
+  <svg
+    width="28px"
+    height="28px"
+    viewBox="0 0 28 28"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g
+      stroke="none"
+      strokeWidth="1"
+      fill="none"
+      fillRule="evenodd"
+    >
+      <rect
+        x="0"
+        y="0"
+        width="28"
+        height="28"
+      />
+      <path
+        d="M9 5.75h6.75L19.25 12v10.25A1.75 1.75 0 0 1 17.5 24h-8.5A1.75 1.75 0 0 1 7.25 22.25V7.75A1.75 1.75 0 0 1 9 5.75Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <path
+        d="M15.75 5.75V12h6.25"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <text
+        x="14"
+        y="18.85"
+        textAnchor="middle"
+        fill="currentColor"
+        fontSize="8"
+        fontWeight="700"
+        fontFamily="system-ui,-apple-system,'Segoe UI',sans-serif"
+      >
+        PDF
+      </text>
+    </g>
+  </svg>
+);
+
 export const ToolCine = (props: IconProps) => (
   <svg
     width="28px"

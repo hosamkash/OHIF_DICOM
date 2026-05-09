@@ -12,7 +12,7 @@ test.describe('Study Validation', () => {
       page,
       notFoundStudyPageObject,
     }) => {
-      await page.goto(`/${mode}/ohif?StudyInstanceUIDs=${invalidStudyUID}`);
+      await page.goto(`/ohif/${mode}/ohif?StudyInstanceUIDs=${invalidStudyUID}`);
 
       await page.waitForURL('**/notfoundstudy', { timeout: 15000 });
 
@@ -27,7 +27,7 @@ test.describe('Study Validation', () => {
       );
 
       await expect(notFoundStudyPageObject.studyListLink).toBeVisible();
-      await expect(notFoundStudyPageObject.studyListLink).toHaveAttribute('href', '/');
+      await expect(notFoundStudyPageObject.studyListLink).toHaveAttribute('href', '/ohif');
     });
   });
 
@@ -37,7 +37,7 @@ test.describe('Study Validation', () => {
       page,
       notFoundStudyPageObject,
     }) => {
-      await page.goto(`/${mode}/ohif?StudyInstanceUIDs=${validStudyUID},${invalidStudyUID}`);
+      await page.goto(`/ohif/${mode}/ohif?StudyInstanceUIDs=${validStudyUID},${invalidStudyUID}`);
 
       await page.waitForURL('**/notfoundstudy', { timeout: 15000 });
 
@@ -52,7 +52,7 @@ test.describe('Study Validation', () => {
       );
 
       await expect(notFoundStudyPageObject.studyListLink).toBeVisible();
-      await expect(notFoundStudyPageObject.studyListLink).toHaveAttribute('href', '/');
+      await expect(notFoundStudyPageObject.studyListLink).toHaveAttribute('href', '/ohif');
     });
   });
 
@@ -62,7 +62,7 @@ test.describe('Study Validation', () => {
       page,
       notFoundStudyPageObject,
     }) => {
-      await page.goto(`/${mode}/ohif?StudyInstanceUIDs=${invalidStudyUID},${validStudyUID}`);
+      await page.goto(`/ohif/${mode}/ohif?StudyInstanceUIDs=${invalidStudyUID},${validStudyUID}`);
 
       await page.waitForURL('**/notfoundstudy', { timeout: 15000 });
 
@@ -77,7 +77,7 @@ test.describe('Study Validation', () => {
       );
 
       await expect(notFoundStudyPageObject.studyListLink).toBeVisible();
-      await expect(notFoundStudyPageObject.studyListLink).toHaveAttribute('href', '/');
+      await expect(notFoundStudyPageObject.studyListLink).toHaveAttribute('href', '/ohif');
     });
   });
 });

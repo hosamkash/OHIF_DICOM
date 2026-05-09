@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { Button, Icons } from '@ohif/ui-next';
 import { useAppConfig } from '@state';
+import { OHIF_VIEWER_HOME_PATH } from '../../constants/viewerRoutes';
 
 const NotFound = ({
   message = "We can't find the page you're looking for.",
@@ -25,7 +26,7 @@ const NotFound = ({
           {showGoBackButton && showStudyList && (
             <Button
               className="mt-8 px-3 text-lg"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(OHIF_VIEWER_HOME_PATH)}
             >
               Return to Study List
             </Button>

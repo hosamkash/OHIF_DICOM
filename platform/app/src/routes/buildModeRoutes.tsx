@@ -1,5 +1,6 @@
 import React from 'react';
 import ModeRoute from '@routes/Mode';
+import { viewerModePathname } from '../constants/viewerRoutes';
 
 /*
   Routes uniquely define an entry point to:
@@ -42,7 +43,8 @@ export default function buildModeRoutes({
   modes.forEach(mode => {
     // todo: for each route. add route to path.
     dataSourceNames.forEach(dataSourceName => {
-      const path = `${mode.routeName}/${dataSourceName}`;
+      const prefixedPath = viewerModePathname(mode.routeName, dataSourceName);
+      const legacyPath = `${mode.routeName}/${dataSourceName}`;
 
       // TODO move up.
       const children = () => (
@@ -57,7 +59,12 @@ export default function buildModeRoutes({
       );
 
       routes.push({
-        path,
+        path: prefixedPath.replace(/^\//, ''),
+        children,
+        private: true,
+      });
+      routes.push({
+        path: legacyPath.replace(/^\//, ''),
         children,
         private: true,
       });
@@ -65,7 +72,8 @@ export default function buildModeRoutes({
 
     // Add active DataSource route.
     // This is the DataSource route for the active data source defined in ExtensionManager.getActiveDataSource
-    const path = `${mode.routeName}`;
+    const prefixedModeOnly = viewerModePathname(mode.routeName, '');
+    const legacyModeOnly = `${mode.routeName}`;
 
     // TODO move up.
     const children = () => (
@@ -79,7 +87,12 @@ export default function buildModeRoutes({
     );
 
     routes.push({
-      path,
+      path: prefixedModeOnly.replace(/^\//, ''),
+      children,
+      private: true,
+    });
+    routes.push({
+      path: legacyModeOnly.replace(/^\//, ''),
       children,
       private: true,
     });

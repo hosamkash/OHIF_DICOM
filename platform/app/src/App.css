@@ -1,4 +1,49 @@
+/*
+ * Vigil Hub – align viewer / worklist with landing page (dark slate base + light text + teal accent).
+ * Uses shadcn-style hsl() channel variables consumed by @ohif/ui-next utilities.
+ */
+:root,
+.dark {
+  color-scheme: dark;
+  --background: 222 49% 8%;
+  --foreground: 214 32% 91%;
+  --muted: 222 35% 14%;
+  --muted-foreground: 215 16% 65%;
+  --card: 222 42% 11%;
+  --card-foreground: 214 32% 91%;
+  --popover: 222 42% 11%;
+  --popover-foreground: 214 32% 91%;
+  --border: 214 18% 26%;
+  --input: 214 18% 26%;
+  --ring: 172 46% 48%;
+  --primary: 172 46% 48%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 222 35% 16%;
+  --secondary-foreground: 214 32% 91%;
+  --accent: 172 40% 22%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62% 42%;
+  --destructive-foreground: 210 40% 98%;
+}
+
+html,
 body {
   overscroll-behavior: none;
   touch-action: none;
+  background-color: #0b1120;
+  color: #e2e8f0;
+}
+
+.bg-black {
+  background-color: #0b1120 !important;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }

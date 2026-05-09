@@ -1147,6 +1147,34 @@ function commandsModule({
         });
       }
     },
+    /** Same workflow as capture, but the modal defaults to PDF export only (toolbar PDF button). */
+    showDownloadViewportPdfModal: () => {
+      const { activeViewportId } = viewportGridService.getState();
+
+      if (!cornerstoneViewportService.getCornerstoneViewport(activeViewportId)) {
+        uiNotificationService.show({
+          title: i18n.t('Tools:Download Image'),
+          message: i18n.t('Tools:Image cannot be downloaded'),
+          type: 'error',
+        });
+        return;
+      }
+
+      const { uiModalService } = servicesManager.services;
+
+      if (uiModalService) {
+        uiModalService.show({
+          content: CornerstoneViewportDownloadForm,
+          title: i18n.t('Tools:Export PDF'),
+          contentProps: {
+            activeViewportId,
+            cornerstoneViewportService,
+            preferredFileFormats: ['pdf'],
+          },
+          containerClassName: 'max-w-4xl p-4',
+        });
+      }
+    },
     /**
      * Rotates the viewport by `rotation` relative to its current rotation.
      */
@@ -2632,6 +2660,9 @@ function commandsModule({
     },
     showDownloadViewportModal: {
       commandFn: actions.showDownloadViewportModal,
+    },
+    showDownloadViewportPdfModal: {
+      commandFn: actions.showDownloadViewportPdfModal,
     },
     toggleCine: {
       commandFn: actions.toggleCine,

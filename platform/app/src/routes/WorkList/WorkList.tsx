@@ -39,6 +39,11 @@ import {
 import { Types } from '@ohif/ui';
 
 import { preserveQueryParameters, preserveQueryStrings } from '../../utils/preserveQueryParameters';
+import {
+  APP_MARKETING_LANDING_PATH,
+  OHIF_VIEWER_HOME_PATH,
+  viewerModePathname,
+} from '../../constants/viewerRoutes';
 
 const PatientInfoVisibility = Types.PatientInfoVisibility;
 
@@ -207,7 +212,7 @@ function WorkList({
       skipEmptyString: true,
     });
     navigate({
-      pathname: '/',
+      pathname: OHIF_VIEWER_HOME_PATH,
       search: search ? `?${search}` : undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -424,7 +429,10 @@ function WorkList({
                   <Link
                     className={isValidMode ? '' : 'cursor-not-allowed'}
                     key={i}
-                    to={`${mode.routeName}${dataPath || ''}?${query.toString()}`}
+                    to={{
+                      pathname: viewerModePathname(mode.routeName, dataPath || ''),
+                      search: query.toString() ? `?${query.toString()}` : undefined,
+                    }}
                     onClick={event => {
                       // In case any event bubbles up for an invalid mode, prevent the navigation.
                       // For example, the event bubbles up when the icon embedded in the disabled button is clicked.
@@ -552,18 +560,20 @@ function WorkList({
   );
 
   return (
-    <div className="flex h-screen flex-col bg-black">
+    <div className="flex h-full min-h-0 flex-col bg-black">
       <Header
         isSticky
         menuOptions={menuOptions}
         isReturnEnabled={false}
+        onClickBrand={() => navigate({ pathname: APP_MARKETING_LANDING_PATH })}
         WhiteLabeling={appConfig.whiteLabeling}
         showPatientInfo={PatientInfoVisibility.DISABLED}
       />
       <Onboarding />
       <InvestigationalUseDialog dialogConfiguration={appConfig?.investigationalUseDialog} />
-      <div className="flex h-full flex-col overflow-y-auto">
-        <ScrollArea>
+      <div className="flex min-h-0 flex-1 flex-col">
+        
+        <ScrollArea className="min-h-0 flex-1">
           <div className="flex grow flex-col">
             <StudyListFilter
               numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}

@@ -12,7 +12,7 @@ const DEFAULT_SIZE = 512;
 const MAX_TEXTURE_SIZE = 10000;
 const VIEWPORT_ID = 'cornerstone-viewport-download-form';
 
-const FILE_TYPE_OPTIONS = [
+const DEFAULT_FILE_TYPE_OPTIONS = [
   {
     value: 'jpg',
     label: 'JPG',
@@ -23,14 +23,24 @@ const FILE_TYPE_OPTIONS = [
   },
 ];
 
+const EXTRA_FILE_TYPE_OPTIONS = [
+  {
+    value: 'pdf',
+    label: 'PDF',
+  },
+];
+
 type ViewportDownloadFormProps = {
   hide: () => void;
   activeViewportId: string;
+  /** Limit which formats appear (e.g. only PDF when opened from the PDF toolbar button). */
+  preferredFileFormats?: ('jpg' | 'png' | 'pdf')[];
 };
 
 const CornerstoneViewportDownloadForm = ({
   hide,
   activeViewportId: activeViewportIdProp,
+  preferredFileFormats,
 }: ViewportDownloadFormProps) => {
   const { servicesManager } = useSystem();
   const { customizationService, cornerstoneViewportService } = servicesManager.services;
@@ -244,8 +254,24 @@ const CornerstoneViewportDownloadForm = ({
       return;
     }
 
-    const filename = `${baseFilename}.${fileType}`;
     const canvas = await html2canvas(divForDownloadViewport as HTMLElement);
+
+    if (fileType === 'pdf') {
+      const { jsPDF } = await import('jspdf');
+      const w = canvas.width;
+      const h = canvas.height;
+      const pdf = new jsPDF({
+        orientation: w >= h ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [w, h],
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+      pdf.save(`${baseFilename}.pdf`);
+      return;
+    }
+
+    const filename = `${baseFilename}.${fileType}`;
     downloadUrl(canvas.toDataURL(`image/${fileType}`, 1.0), { filename });
   };
 
@@ -295,11 +321,21 @@ const CornerstoneViewportDownloadForm = ({
     'ohif.captureViewportModal'
   );
 
+  const fileTypeOptions = (() => {
+    const allChoices = [...DEFAULT_FILE_TYPE_OPTIONS, ...EXTRA_FILE_TYPE_OPTIONS];
+    if (!preferredFileFormats?.length) {
+      return DEFAULT_FILE_TYPE_OPTIONS;
+    }
+    return preferredFileFormats
+      .map(v => allChoices.find(o => o.value === v))
+      .filter(Boolean) as typeof DEFAULT_FILE_TYPE_OPTIONS;
+  })();
+
   return (
     <ViewportDownloadFormNew
       onClose={hide}
       defaultSize={DEFAULT_SIZE}
-      fileTypeOptions={FILE_TYPE_OPTIONS}
+      fileTypeOptions={fileTypeOptions}
       viewportId={VIEWPORT_ID}
       showAnnotations={showAnnotations}
       onAnnotationsChange={setShowAnnotations}

@@ -26,6 +26,7 @@ import {
 
 import loadModules, { loadModule as peerImport } from './pluginImports';
 import { publicUrl } from './utils/publicUrl';
+import { createVigilHeaderLogoComponent } from './components/VigilHeaderLogo';
 
 /**
  * @param {object|func} appConfigOrFunc - application configuration, or a function that returns application configuration
@@ -45,6 +46,11 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
     ...(typeof appConfigOrFunc === 'function'
       ? await appConfigOrFunc({ servicesManager, peerImport })
       : appConfigOrFunc),
+  };
+  /** Vigil brand lockup in Header (study list + viewer). Override via `whiteLabeling` in app-config. */
+  appConfig.whiteLabeling = {
+    createLogoComponentFn: createVigilHeaderLogoComponent,
+    ...(appConfig.whiteLabeling || {}),
   };
   // Default the peer import function
   appConfig.peerImport ||= peerImport;
