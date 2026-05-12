@@ -155,7 +155,10 @@ module.exports = (env, argv) => {
       },
       proxy: [
         {
-          '/dicomweb': 'http://localhost:5000',
+          context: ['/dicomweb'],
+          target: 'http://localhost:5000',
+          changeOrigin: true,
+          logLevel: 'info',
         },
       ],
       static: [
@@ -177,7 +180,9 @@ module.exports = (env, argv) => {
         index: PUBLIC_URL + 'index.html',
       },
       devMiddleware: {
-        writeToDisk: true,
+        // Writing the full in-memory dev bundle to disk doubles I/O and peak RAM.
+        // Set OHIF_DEV_WRITE_TO_DISK=true if something (e.g. a custom proxy) needs files on disk.
+        writeToDisk: process.env.OHIF_DEV_WRITE_TO_DISK === 'true',
       },
     },
   });
@@ -206,7 +211,8 @@ module.exports = (env, argv) => {
   }
 
   mergedConfig.watchOptions = {
-    ignored: /node_modules\/@cornerstonejs/,
+    ignored:
+      /node_modules\/@cornerstonejs|[\\/]dist[\\/]|[\\/]testdata[\\/]|\.git([\\/]|$)/,
   };
 
   return mergedConfig;
