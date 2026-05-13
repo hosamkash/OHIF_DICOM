@@ -17,13 +17,10 @@ const PUBLIC_DIR = path.join(__dirname, '../public');
 // ~~ Env Vars
 const HTML_TEMPLATE = process.env.HTML_TEMPLATE || 'index.html';
 const PUBLIC_URL = process.env.PUBLIC_URL || '/';
-const APP_CONFIG = process.env.APP_CONFIG || 'config/default.js';
+const APP_CONFIG = process.env.APP_CONFIG || 'config/app-config.js';
 
 // proxy settings
-const PROXY_TARGET = process.env.PROXY_TARGET;
 const PROXY_DOMAIN = process.env.PROXY_DOMAIN;
-const PROXY_PATH_REWRITE_FROM = process.env.PROXY_PATH_REWRITE_FROM;
-const PROXY_PATH_REWRITE_TO = process.env.PROXY_PATH_REWRITE_TO;
 const IS_COVERAGE = process.env.COVERAGE === 'true';
 
 const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
@@ -55,7 +52,7 @@ const setHeaders = (res, path) => {
 module.exports = (env, argv) => {
   const baseConfig = webpackBase(env, argv, { SRC_DIR, DIST_DIR });
   const isProdBuild = process.env.NODE_ENV === 'production';
-  const hasProxy = PROXY_TARGET && PROXY_DOMAIN;
+  const hasProxy = Boolean(PROXY_DOMAIN);
 
   const mergedConfig = merge(baseConfig, {
     entry: {
@@ -188,15 +185,23 @@ module.exports = (env, argv) => {
   });
 
   if (hasProxy) {
-    mergedConfig.devServer.proxy = mergedConfig.devServer.proxy || {};
     mergedConfig.devServer.proxy = [
       {
-        context: [PROXY_PATH_REWRITE_FROM || '/dicomweb'],
+        context: ['/dicomweb'],
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        logLevel: 'info',
+      },
+      {
+        context: ['/pacs'],
         target: PROXY_DOMAIN,
         changeOrigin: true,
-        pathRewrite: {
-          [`^${PROXY_PATH_REWRITE_FROM}`]: PROXY_PATH_REWRITE_TO,
-        },
+        pathRewrite: { '^/pacs': '' },
+      },
+      {
+        context: ['/wado'],
+        target: PROXY_DOMAIN,
+        changeOrigin: true,
       },
     ];
   }

@@ -38,8 +38,16 @@ function ViewportDownloadFormNew({
   const [viewportElement, setViewportElement] = useState<HTMLElement | null>(null);
   const [showWarningMessage, setShowWarningMessage] = useState(true);
   const [filename, setFilename] = useState(DEFAULT_FILENAME);
-  const [fileType, setFileType] = useState('jpg');
+  const [fileType, setFileType] = useState(() => fileTypeOptions[0]?.value ?? 'jpg');
   const { t } = useTranslation('CaptureViewportModal');
+
+  useEffect(() => {
+    const allowed = fileTypeOptions.map(o => o.value);
+    if (!allowed.length) {
+      return;
+    }
+    setFileType(current => (allowed.includes(current) ? current : allowed[0]));
+  }, [fileTypeOptions]);
 
   useEffect(() => {
     if (!viewportElement) {
@@ -91,6 +99,7 @@ function ViewportDownloadFormNew({
               selected={fileType}
               onSelect={setFileType}
               options={fileTypeOptions}
+              disabled={fileTypeOptions.length === 1}
             />
           </div>
 

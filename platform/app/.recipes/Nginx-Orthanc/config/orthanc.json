@@ -7,6 +7,7 @@
   "MaximumPatientCount": 0,
   "LuaScripts": [],
   "Plugins": ["/usr/share/orthanc/plugins", "/usr/local/share/orthanc/plugins"],
+  "PythonScript": "validation.py",
   "ConcurrentJobs": 2,
   "HttpServerEnabled": true,
   "HttpPort": 8042,
@@ -28,9 +29,9 @@
   "DicomScpTimeout": 30,
 
   "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
   "SslEnabled": false,
   "SslCertificate": "certificate.pem",
-  "AuthenticationEnabled": false,
   "RegisteredUsers": {
     "test": "test"
   },

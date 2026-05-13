@@ -1,5 +1,5 @@
 import { utils } from '@ohif/core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { getEnabledElement, StackViewport, BaseVolumeViewport } from '@cornerstonejs/core';
 import { ToolGroupManager, segmentation, Enums } from '@cornerstonejs/tools';
@@ -321,7 +321,7 @@ const CornerstoneViewportDownloadForm = ({
     'ohif.captureViewportModal'
   );
 
-  const fileTypeOptions = (() => {
+  const fileTypeOptions = useMemo(() => {
     const allChoices = [...DEFAULT_FILE_TYPE_OPTIONS, ...EXTRA_FILE_TYPE_OPTIONS];
     if (!preferredFileFormats?.length) {
       return DEFAULT_FILE_TYPE_OPTIONS;
@@ -329,7 +329,7 @@ const CornerstoneViewportDownloadForm = ({
     return preferredFileFormats
       .map(v => allChoices.find(o => o.value === v))
       .filter(Boolean) as typeof DEFAULT_FILE_TYPE_OPTIONS;
-  })();
+  }, [preferredFileFormats]);
 
   return (
     <ViewportDownloadFormNew
