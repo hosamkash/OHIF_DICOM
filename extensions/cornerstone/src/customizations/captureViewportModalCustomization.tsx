@@ -41,6 +41,9 @@ function ViewportDownloadFormNew({
   const [fileType, setFileType] = useState(() => fileTypeOptions[0]?.value ?? 'jpg');
   const { t } = useTranslation('CaptureViewportModal');
 
+  const primaryActionLabel =
+    fileType === 'pdf' ? t('Export PDF', { defaultValue: 'Export PDF' }) : t('Save Image');
+
   useEffect(() => {
     const allowed = fileTypeOptions.map(o => o.value);
     if (!allowed.length) {
@@ -168,8 +171,9 @@ function ViewportDownloadFormNew({
                   onDownload(filename || DEFAULT_FILENAME, fileType);
                   onClose();
                 }}
+                className="min-w-[160px] px-6 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {t('Save Image')}
+                {primaryActionLabel}
               </FooterAction.Primary>
             </FooterAction.Right>
           </FooterAction>
