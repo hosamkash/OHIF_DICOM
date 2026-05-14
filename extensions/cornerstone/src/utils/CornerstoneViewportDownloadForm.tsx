@@ -1,13 +1,23 @@
 import { utils } from '@ohif/core';
 import i18n from '@ohif/i18n';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { getEnabledElement, StackViewport, BaseVolumeViewport } from '@cornerstonejs/core';
 import { ToolGroupManager, segmentation, Enums } from '@cornerstonejs/tools';
 import { getEnabledElement as OHIFgetEnabledElement } from '../state';
 import { useSystem } from '@ohif/core/src';
+import {
+  buildSecondaryCaptureDicomBlob,
+  type SourceDisplaySetLike,
+} from './buildSecondaryCaptureDicomBlob';
 
-const { downloadUrl } = utils;
+const { downloadUrl, downloadDicom, downloadBlob } = utils;
+
+type ExportArtifact = {
+  blob: Blob;
+  filename: string;
+  mimeType: string;
+};
 
 const DEFAULT_SIZE = 512;
 const MAX_TEXTURE_SIZE = 10000;
@@ -29,13 +39,17 @@ const EXTRA_FILE_TYPE_OPTIONS = [
     value: 'pdf',
     label: 'PDF',
   },
+  {
+    value: 'dcm',
+    label: 'DICOM',
+  },
 ];
 
 type ViewportDownloadFormProps = {
   hide: () => void;
   activeViewportId: string;
   /** Limit which formats appear (e.g. only PDF when opened from the PDF toolbar button). */
-  preferredFileFormats?: ('jpg' | 'png' | 'pdf')[];
+  preferredFileFormats?: ('jpg' | 'png' | 'pdf' | 'dcm')[];
 };
 
 const CornerstoneViewportDownloadForm = ({
@@ -44,8 +58,12 @@ const CornerstoneViewportDownloadForm = ({
   preferredFileFormats,
 }: ViewportDownloadFormProps) => {
   const { servicesManager } = useSystem();
-  const { customizationService, cornerstoneViewportService, uiNotificationService } =
-    servicesManager.services;
+  const {
+    customizationService,
+    cornerstoneViewportService,
+    displaySetService,
+    uiNotificationService,
+  } = servicesManager.services;
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [viewportDimensions, setViewportDimensions] = useState({
     width: DEFAULT_SIZE,
@@ -308,36 +326,147 @@ const CornerstoneViewportDownloadForm = ({
     }, 100);
   }, [captureContext, renderingEngine, viewportDimensions, showAnnotations]);
 
-  const handleDownload = async (baseFilename: string, fileType: string) => {
-    const divForDownloadViewport = document.querySelector(
-      `div[data-viewport-uid="${VIEWPORT_ID}"]`
-    );
+  const buildExportArtifact = useCallback(
+    async (baseFilename: string, fileType: string): Promise<ExportArtifact | null> => {
+      const divForDownloadViewport = document.querySelector(
+        `div[data-viewport-uid="${VIEWPORT_ID}"]`
+      );
+      if (!divForDownloadViewport) {
+        console.debug('No viewport found for download');
+        return null;
+      }
 
-    if (!divForDownloadViewport) {
-      console.debug('No viewport found for download');
+      const canvas = await html2canvas(divForDownloadViewport as HTMLElement);
+      const base = baseFilename || 'image';
+
+      if (fileType === 'dcm') {
+        let source: SourceDisplaySetLike | null = null;
+        try {
+          const vpInfo = cornerstoneViewportService.getViewportInfo?.(activeViewportIdProp);
+          const viewportData = vpInfo?.getViewportData?.();
+          const displaySetInstanceUID = viewportData?.data?.[0]?.displaySetInstanceUID;
+          if (displaySetInstanceUID && displaySetService?.getDisplaySetByUID) {
+            source = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
+          }
+        } catch (e) {
+          console.warn('DICOM export: could not resolve source display set', e);
+        }
+        const blob = buildSecondaryCaptureDicomBlob(canvas, { source });
+        return { blob, filename: `${base}.dcm`, mimeType: 'application/dicom' };
+      }
+
+      if (fileType === 'pdf') {
+        const { jsPDF } = await import('jspdf');
+        const w = canvas.width;
+        const h = canvas.height;
+        const pdf = new jsPDF({
+          orientation: w >= h ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [w, h],
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+        const blob = pdf.output('blob');
+        return { blob, filename: `${base}.pdf`, mimeType: 'application/pdf' };
+      }
+
+      const mimeType = fileType === 'jpg' ? 'image/jpeg' : `image/${fileType}`;
+      const dataUrl = canvas.toDataURL(mimeType, 1.0);
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      return { blob, filename: `${base}.${fileType}`, mimeType };
+    },
+    [activeViewportIdProp, cornerstoneViewportService, displaySetService]
+  );
+
+  const saveArtifactToDisk = useCallback(async (artifact: ExportArtifact, fileType: string) => {
+    if (fileType === 'dcm') {
+      const buffer = await artifact.blob.arrayBuffer();
+      downloadDicom(buffer, { filename: artifact.filename });
       return;
     }
-
-    const canvas = await html2canvas(divForDownloadViewport as HTMLElement);
-
     if (fileType === 'pdf') {
-      const { jsPDF } = await import('jspdf');
-      const w = canvas.width;
-      const h = canvas.height;
-      const pdf = new jsPDF({
-        orientation: w >= h ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [w, h],
-      });
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-      pdf.save(`${baseFilename}.pdf`);
+      downloadBlob(artifact.blob, { filename: artifact.filename });
       return;
     }
+    const url = URL.createObjectURL(artifact.blob);
+    downloadUrl(url, { filename: artifact.filename });
+    URL.revokeObjectURL(url);
+  }, []);
 
-    const filename = `${baseFilename}.${fileType}`;
-    downloadUrl(canvas.toDataURL(`image/${fileType}`, 1.0), { filename });
-  };
+  const handleDownload = useCallback(
+    async (baseFilename: string, fileType: string) => {
+      const artifact = await buildExportArtifact(baseFilename, fileType);
+      if (!artifact) {
+        return;
+      }
+      await saveArtifactToDisk(artifact, fileType);
+    },
+    [buildExportArtifact, saveArtifactToDisk]
+  );
+
+  const launchNativeShare = useCallback(
+    async (artifact: ExportArtifact, fileType: string): Promise<'file' | 'text' | false> => {
+      const nav = navigator as Navigator & {
+        share?: (data: ShareData & { files?: File[] }) => Promise<void>;
+        canShare?: (data: { files: File[] }) => boolean;
+      };
+
+      if (typeof nav.share !== 'function') {
+        await saveArtifactToDisk(artifact, fileType);
+        uiNotificationService?.show({
+          title: i18n.t('CaptureViewportModal:Share fallback title'),
+          message: i18n.t('CaptureViewportModal:Share fallback no api'),
+          type: 'info',
+          duration: 8000,
+        });
+        return false;
+      }
+
+      const file = new File([artifact.blob], artifact.filename, { type: artifact.mimeType });
+      const fileTitle = artifact.filename;
+      const textOnlyBody = `${i18n.t('CaptureViewportModal:Share text only intro')}: ${fileTitle}\n${i18n.t('CaptureViewportModal:Share text only attach hint')}`;
+
+      const shareTextOnly = async (): Promise<'text' | false> => {
+        await saveArtifactToDisk(artifact, fileType);
+        try {
+          await nav.share({
+            title: fileTitle,
+            text: textOnlyBody,
+          });
+          return 'text';
+        } catch (err) {
+          const name = err && typeof err === 'object' && 'name' in err ? (err as Error).name : '';
+          if (name === 'AbortError') {
+            return false;
+          }
+          throw err;
+        }
+      };
+
+      const filesSupported =
+        typeof nav.canShare !== 'function' || nav.canShare({ files: [file] });
+
+      if (filesSupported) {
+        try {
+          await nav.share({
+            files: [file],
+            title: fileTitle,
+          });
+          return 'file';
+        } catch (err) {
+          const name = err && typeof err === 'object' && 'name' in err ? (err as Error).name : '';
+          if (name === 'AbortError') {
+            return false;
+          }
+          return shareTextOnly();
+        }
+      }
+
+      return shareTextOnly();
+    },
+    [saveArtifactToDisk, uiNotificationService]
+  );
 
   const handleCopyToClipboard = async () => {
     const divForDownloadViewport = document.querySelector(
@@ -412,6 +541,8 @@ const CornerstoneViewportDownloadForm = ({
       onEnableViewport={handleEnableViewport}
       onDisableViewport={handleDisableViewport}
       onDownload={handleDownload}
+      onSharePrepare={buildExportArtifact}
+      onShareLaunch={launchNativeShare}
       onCopyToClipboard={handleCopyToClipboard}
       warningState={warningState}
     />

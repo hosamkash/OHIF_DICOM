@@ -1138,16 +1138,19 @@ function commandsModule({
       if (uiModalService) {
         uiModalService.show({
           content: CornerstoneViewportDownloadForm,
-          title: i18n.t('Tools:Download High Quality Image'),
+          title: i18n.t('Tools:ExportsAndShare'),
           contentProps: {
             activeViewportId,
             cornerstoneViewportService,
           },
-          containerClassName: 'max-w-4xl p-4',
+          /** Native share steals focus / counts as "outside" — closing the modal dismisses the share sheet. */
+          shouldCloseOnOverlayClick: false,
+          containerClassName:
+            'max-h-[90vh] h-[90vh] max-w-[min(56rem,calc(100vw-2rem))] w-full overflow-y-auto p-4 !max-w-none',
         });
       }
     },
-    /** Same workflow as capture, but the modal defaults to PDF export only (toolbar PDF button). */
+    /** Toolbar PDF entry: same capture form, PDF/PNG/JPG with PDF selected first in the format list. */
     showDownloadViewportPdfModal: () => {
       const { activeViewportId } = viewportGridService.getState();
 
@@ -1169,8 +1172,9 @@ function commandsModule({
           contentProps: {
             activeViewportId,
             cornerstoneViewportService,
-            preferredFileFormats: ['pdf'],
+            preferredFileFormats: ['pdf', 'png', 'jpg', 'dcm'],
           },
+          shouldCloseOnOverlayClick: false,
           containerClassName: 'max-w-4xl p-4',
         });
       }

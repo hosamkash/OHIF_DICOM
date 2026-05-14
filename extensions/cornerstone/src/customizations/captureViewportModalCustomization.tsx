@@ -1,8 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { ImageModal, FooterAction, toast } from '@ohif/ui-next';
 import { useTranslation } from 'react-i18next';
+
 const MAX_TEXTURE_SIZE = 10000;
 const DEFAULT_FILENAME = 'image';
+
+/** Same shape as `ExportArtifact` in CornerstoneViewportDownloadForm (kept local to avoid import cycles). */
+type ShareArtifactPayload = {
+  blob: Blob;
+  filename: string;
+  mimeType: string;
+};
+
+function ShareGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle
+        cx="18"
+        cy="5"
+        r="3"
+      />
+      <circle
+        cx="6"
+        cy="12"
+        r="3"
+      />
+      <circle
+        cx="18"
+        cy="19"
+        r="3"
+      />
+      <line
+        x1="8.59"
+        y1="13.51"
+        x2="15.42"
+        y2="17.49"
+      />
+      <line
+        x1="15.41"
+        y1="6.51"
+        x2="8.59"
+        y2="10.49"
+      />
+    </svg>
+  );
+}
 
 interface ViewportDownloadFormNewProps {
   onClose: () => void;
@@ -15,7 +66,13 @@ interface ViewportDownloadFormNewProps {
   onDimensionsChange: (dimensions: { width: number; height: number }) => void;
   onEnableViewport: (element: HTMLElement) => void;
   onDisableViewport: () => void;
-  onDownload: (filename: string, fileType: string) => void;
+  onDownload: (filename: string, fileType: string) => void | Promise<void>;
+  /**
+   * Step 1: build file (may be slow — breaks transient user activation).
+   * Step 2: user taps `onShareLaunch` so `navigator.share` runs on a fresh gesture.
+   */
+  onSharePrepare?: (filename: string, fileType: string) => Promise<ShareArtifactPayload | null>;
+  onShareLaunch?: (artifact: ShareArtifactPayload, fileType: string) => Promise<'file' | 'text' | false>;
   onCopyToClipboard: () => void;
   warningState: { enabled: boolean; value: string };
 }
@@ -33,16 +90,25 @@ function ViewportDownloadFormNew({
   onEnableViewport,
   onDisableViewport,
   onDownload,
+  onSharePrepare,
+  onShareLaunch,
   onCopyToClipboard,
 }: ViewportDownloadFormNewProps) {
   const [viewportElement, setViewportElement] = useState<HTMLElement | null>(null);
   const [showWarningMessage, setShowWarningMessage] = useState(true);
   const [filename, setFilename] = useState(DEFAULT_FILENAME);
   const [fileType, setFileType] = useState(() => fileTypeOptions[0]?.value ?? 'jpg');
+  const [sharePrepareBusy, setSharePrepareBusy] = useState(false);
+  const [shareLaunchBusy, setShareLaunchBusy] = useState(false);
+  const [shareArtifact, setShareArtifact] = useState<ShareArtifactPayload | null>(null);
   const { t } = useTranslation('CaptureViewportModal');
 
   const primaryActionLabel =
-    fileType === 'pdf' ? t('Export PDF', { defaultValue: 'Export PDF' }) : t('Save Image');
+    fileType === 'pdf' || fileType === 'dcm'
+      ? t('Export', { defaultValue: 'Export' })
+      : t('Save Image');
+
+  const shareEnabled = Boolean(onSharePrepare && onShareLaunch);
 
   useEffect(() => {
     const allowed = fileTypeOptions.map(o => o.value);
@@ -63,6 +129,53 @@ function ViewportDownloadFormNew({
       onDisableViewport();
     };
   }, [onDisableViewport, onEnableViewport, viewportElement]);
+
+  useEffect(() => {
+    setShareArtifact(null);
+  }, [filename, fileType]);
+
+  const handlePrepareShare = async () => {
+    if (!onSharePrepare || sharePrepareBusy) {
+      return;
+    }
+    setSharePrepareBusy(true);
+    try {
+      const art = await onSharePrepare(filename || DEFAULT_FILENAME, fileType);
+      if (!art) {
+        toast.error(t('Share failed', { defaultValue: 'Share failed' }));
+        return;
+      }
+      setShareArtifact(art);
+      toast(t('Share file ready'), { duration: 4000 });
+    } catch (error) {
+      toast.error(t('Share failed', { defaultValue: 'Share failed' }));
+      console.error('Share prepare error:', error);
+    } finally {
+      setSharePrepareBusy(false);
+    }
+  };
+
+  const handleLaunchShare = async () => {
+    if (!onShareLaunch || !shareArtifact || shareLaunchBusy) {
+      return;
+    }
+    setShareLaunchBusy(true);
+    try {
+      const result = await onShareLaunch(shareArtifact, fileType);
+      if (result === 'file') {
+        toast.success(t('Share completed', { defaultValue: 'Share opened' }));
+        onClose();
+      } else if (result === 'text') {
+        toast.success(t('Share text sheet opened'));
+        onClose();
+      }
+    } catch (error) {
+      toast.error(t('Share failed', { defaultValue: 'Share failed' }));
+      console.error('Share launch error:', error);
+    } finally {
+      setShareLaunchBusy(false);
+    }
+  };
 
   return (
     <ImageModal>
@@ -167,8 +280,8 @@ function ViewportDownloadFormNew({
                 {t('Copy to Clipboard')}
               </FooterAction.Secondary>
               <FooterAction.Primary
-                onClick={() => {
-                  onDownload(filename || DEFAULT_FILENAME, fileType);
+                onClick={async () => {
+                  await onDownload(filename || DEFAULT_FILENAME, fileType);
                   onClose();
                 }}
                 className="min-w-[160px] px-6 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -177,6 +290,44 @@ function ViewportDownloadFormNew({
               </FooterAction.Primary>
             </FooterAction.Right>
           </FooterAction>
+
+          {shareEnabled ? (
+            <div className="border-input bg-muted/40 text-foreground mt-3 flex w-full flex-col gap-2 rounded-xl border p-3 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/15 text-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-lg">
+                  <ShareGlyph className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold">{t('Share', { defaultValue: 'Share' })}</div>
+                  <div className="text-muted-foreground text-xs leading-snug">
+                    {t('Share two step hint')}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  disabled={sharePrepareBusy}
+                  onClick={() => void handlePrepareShare()}
+                  className="bg-muted text-foreground hover:bg-muted/80 inline-flex flex-1 items-center justify-center rounded-lg border border-input px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {sharePrepareBusy
+                    ? t('Share preparing', { defaultValue: 'Preparing file…' })
+                    : t('Share step prepare', { defaultValue: '1 — Prepare file' })}
+                </button>
+                <button
+                  type="button"
+                  disabled={!shareArtifact || shareLaunchBusy}
+                  onClick={() => void handleLaunchShare()}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex flex-1 items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {shareLaunchBusy
+                    ? t('Share opening', { defaultValue: 'Opening…' })
+                    : t('Share step open', { defaultValue: '2 — Open share sheet' })}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </ImageModal.ImageOptions>
       </ImageModal.Body>
     </ImageModal>

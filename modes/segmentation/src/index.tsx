@@ -45,7 +45,6 @@ function modeFactory({ modeConfiguration }) {
         'Pan',
         'Zoom',
         'TrackballRotate',
-        'Capture',
         'PdfExport',
         'Layout',
         'Crosshairs',

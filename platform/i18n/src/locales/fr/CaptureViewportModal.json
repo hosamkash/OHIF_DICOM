@@ -51,5 +51,7 @@
   "Add capture to report": "Ajouter la capture au rapport",
   "Report name": "Nom du rapport",
   "Report description": "Description du rapport",
-  "Error capturing viewport": "Erreur lors de la capture de la fenêtre"
+  "Error capturing viewport": "Erreur lors de la capture de la fenêtre",
+  "Export": "Exporter",
+  "Save Image": "Enregistrer l'image"
 }

@@ -28,7 +28,6 @@ const IconUserX = getLucideIcon('UserX');
 const IconFilePlus = getLucideIcon('FilePlus');
 const IconExternalLink = getLucideIcon('ExternalLink');
 const IconCopy = getLucideIcon('Copy');
-const IconShareHub = getLucideIcon('Share2');
 
 /** مطابقة `@ohif/mode-basic` — مسار `/ohif/basic` (تجنّب كلمة basic وحدها لأنها تظهر في اسم المشاهد الطولي). */
 const PREFER_MODE_KEYWORDS_BASIC = ['@ohif/mode-basic', 'mode-basic', 'non-longitudinal'];
@@ -249,7 +248,7 @@ export default function CaseStudyExpandedPanel({
   onAfterStudyMutation,
   orthancUiBaseUrl = DEFAULT_ORTHANC_UI,
 }: CaseStudyExpandedPanelProps) {
-  const { servicesManager, commandsManager } = useSystem();
+  const { servicesManager } = useSystem();
   const { show, hide } = useModal();
   const [labels, setLabels] = useState<string[]>([]);
   const [labelInput, setLabelInput] = useState('');
@@ -660,17 +659,6 @@ export default function CaseStudyExpandedPanel({
                   title="عرض في OHIF"
                   subtitle="سونار B-line"
                   onClick={() => onOpenPreferMode(PREFER_MODE_KEYWORDS_US_PLEURA)}
-                />
-                <ActionTile
-                  icon={IconShareHub}
-                  title="تصدير ومشاركة"
-                  subtitle="نفس الصفحة — للصورة من العرض افتح المشاهد أولاً"
-                  onClick={() => {
-                    commandsManager.run({
-                      commandName: 'openViewerExportHubDialog',
-                      context: 'VIEWER',
-                    });
-                  }}
                 />
                 <ActionTile
                   icon={IconDownload}

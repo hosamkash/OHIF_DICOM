@@ -26,6 +26,12 @@ const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
 const OHIF_OPEN = process.env.OHIF_OPEN !== 'false';
 
 export default defineConfig({
+  // Rsbuild defaults dev.lazyCompilation.imports to true, which emits lazy-compilation-proxy
+  // chunks. Those load via importScripts inside @cornerstonejs/dicom-image-loader workers and
+  // fail at runtime (NetworkError). Disable for reliable JPEG-LS / worker decoding in dev.
+  dev: {
+    lazyCompilation: false,
+  },
   source: {
     entry: {
       index: `${SRC_DIR}/index.js`,

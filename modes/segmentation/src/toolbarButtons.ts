@@ -251,6 +251,22 @@ export const toolbarButtons: Button[] = [
     },
   },
   {
+    id: 'PdfExport',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'Export',
+      label: i18n.t('Buttons:PDF'),
+      commands: 'showDownloadViewportPdfModal',
+      evaluate: [
+        'evaluate.action',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video', 'wholeSlide'],
+        },
+      ],
+    },
+  },
+  {
     id: 'Layout',
     uiType: 'ohif.layoutSelector',
     props: {

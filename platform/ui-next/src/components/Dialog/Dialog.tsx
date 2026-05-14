@@ -30,14 +30,23 @@ const Dialog = ({
   shouldCloseOnEsc = true,
   shouldCloseOnOverlayClick = true,
   showOverlay = true,
+  modal: modalProp,
   ...props
-}: DialogRootProps) => (
-  <DialogContext.Provider
-    value={{ isDraggable, shouldCloseOnEsc, shouldCloseOnOverlayClick, showOverlay }}
-  >
-    <DialogPrimitive.Root {...props} />
-  </DialogContext.Provider>
-);
+}: DialogRootProps) => {
+  /** When `shouldCloseOnOverlayClick` is false, use a non-modal root so OS sheets (share, files) are not starved by focus/pointer guards. */
+  const modal = modalProp ?? shouldCloseOnOverlayClick;
+
+  return (
+    <DialogContext.Provider
+      value={{ isDraggable, shouldCloseOnEsc, shouldCloseOnOverlayClick, showOverlay }}
+    >
+      <DialogPrimitive.Root
+        {...props}
+        modal={modal}
+      />
+    </DialogContext.Provider>
+  );
+};
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
@@ -72,9 +81,11 @@ const DialogContent = React.forwardRef<
   DialogContentProps & {
     children?: React.ReactNode;
   }
->(({ className, children, unstyled, ...props }, ref) => {
+>(({ className, children, unstyled, onPointerDownOutside, onFocusOutside, onInteractOutside, ...props }, ref) => {
   const { isDraggable, shouldCloseOnEsc, shouldCloseOnOverlayClick, showOverlay } =
     React.useContext(DialogContext);
+
+  const blockDismissFromOutside = !shouldCloseOnOverlayClick;
 
   const { handlePointerDown, setRefs, initialTransform } = useDraggable(
     {
@@ -106,10 +117,23 @@ const DialogContent = React.forwardRef<
           event.preventDefault();
         }
       }}
-      onInteractOutside={event => {
-        if (!shouldCloseOnOverlayClick) {
+      onPointerDownOutside={event => {
+        if (blockDismissFromOutside) {
           event.preventDefault();
         }
+        onPointerDownOutside?.(event);
+      }}
+      onFocusOutside={event => {
+        if (blockDismissFromOutside) {
+          event.preventDefault();
+        }
+        onFocusOutside?.(event);
+      }}
+      onInteractOutside={event => {
+        if (blockDismissFromOutside) {
+          event.preventDefault();
+        }
+        onInteractOutside?.(event);
       }}
     >
       {children}

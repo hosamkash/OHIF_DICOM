@@ -54,16 +54,6 @@ window.config = {
       },
     },
   },
-  customButtons: [
-    {
-      id: 'exportShareHub',
-      label: 'تصدير ومشاركة',
-      icon: 'external-link',
-      type: 'command',
-      commandName: 'openViewerExportHubDialog',
-      context: 'VIEWER',
-    },
-  ],
   commandsManager: {
     commands: {},
   },
