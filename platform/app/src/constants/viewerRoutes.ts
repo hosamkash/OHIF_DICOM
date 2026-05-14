@@ -1,3 +1,5 @@
+import { routerBasename } from '../utils/publicUrl';
+
 /** Path segment for OHIF viewer app (study list & modes); old home used to be `/`. */
 export const OHIF_VIEWER_HOME_PATH = '/ohif';
 
@@ -71,4 +73,24 @@ export function getDatasourceSlugFromViewerPath(pathname: string): string | null
   }
   const slug = rel.slice(slash + 1).split('/')[0];
   return slug.length > 0 ? slug : null;
+}
+
+/** Full URL for a path under the app (respects `routerBasename`). */
+export function buildAppAbsoluteUrl(pathname: string, search?: string | URLSearchParams): string {
+  let qs = '';
+  if (search !== undefined && search !== '') {
+    if (typeof search === 'string') {
+      qs = search.startsWith('?') ? search : `?${search}`;
+    } else {
+      const s = search.toString();
+      qs = s ? `?${s}` : '';
+    }
+  }
+  const base = routerBasename === '/' ? '' : String(routerBasename).replace(/\/+$/, '');
+  const p = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  return `${window.location.origin}${base}${p}${qs}`;
+}
+
+export function openAppPathInNewTab(pathname: string, search?: string | URLSearchParams): void {
+  window.open(buildAppAbsoluteUrl(pathname, search), '_blank', 'noopener,noreferrer');
 }

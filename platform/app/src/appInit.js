@@ -27,6 +27,7 @@ import {
 import loadModules, { loadModule as peerImport } from './pluginImports';
 import { publicUrl } from './utils/publicUrl';
 import { createVigilHeaderLogoComponent } from './components/VigilHeaderLogo';
+import { registerViewerExportCommands } from './registerViewerExportCommands';
 
 /**
  * @param {object|func} appConfigOrFunc - application configuration, or a function that returns application configuration
@@ -117,6 +118,8 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
       );
     });
   }
+
+  registerViewerExportCommands(commandsManager, servicesManager);
 
   // TODO: We no longer use `utils.addServer`
   // TODO: We no longer init webWorkers at app level

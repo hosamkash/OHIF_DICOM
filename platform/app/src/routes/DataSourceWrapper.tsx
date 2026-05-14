@@ -222,7 +222,8 @@ function DataSourceWrapper(props: withAppTypes) {
 
   // TODO: Better way to pass DataSource?
   return (
-    <LayoutTemplate
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+      <LayoutTemplate
       {...rest}
       data={data.studies}
       dataPath={dataSourcePath}
@@ -232,6 +233,7 @@ function DataSourceWrapper(props: withAppTypes) {
       // To refresh the data, simply reset it to DEFAULT_DATA which invalidates it and triggers a new query to fetch the data.
       onRefresh={() => setData(DEFAULT_DATA)}
     />
+    </div>
   );
 }
 

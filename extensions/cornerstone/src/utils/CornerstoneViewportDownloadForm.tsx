@@ -1,5 +1,6 @@
 import { utils } from '@ohif/core';
-import React, { useEffect, useState, useMemo } from 'react';
+import i18n from '@ohif/i18n';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { getEnabledElement, StackViewport, BaseVolumeViewport } from '@cornerstonejs/core';
 import { ToolGroupManager, segmentation, Enums } from '@cornerstonejs/tools';
@@ -43,7 +44,8 @@ const CornerstoneViewportDownloadForm = ({
   preferredFileFormats,
 }: ViewportDownloadFormProps) => {
   const { servicesManager } = useSystem();
-  const { customizationService, cornerstoneViewportService } = servicesManager.services;
+  const { customizationService, cornerstoneViewportService, uiNotificationService } =
+    servicesManager.services;
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [viewportDimensions, setViewportDimensions] = useState({
     width: DEFAULT_SIZE,
@@ -55,15 +57,61 @@ const CornerstoneViewportDownloadForm = ({
     value: string;
   };
 
-  const refViewportEnabledElementOHIF = OHIFgetEnabledElement(activeViewportIdProp);
-  const activeViewportElement = refViewportEnabledElementOHIF?.element;
-  const { viewportId: activeViewportId, renderingEngineId } =
-    getEnabledElement(activeViewportElement);
+  const captureContext = useMemo(() => {
+    if (!activeViewportIdProp || !cornerstoneViewportService?.getRenderingEngine) {
+      return null;
+    }
+    const refOHIF = OHIFgetEnabledElement(activeViewportIdProp);
+    const element = refOHIF?.element;
+    if (!element) {
+      return null;
+    }
+    try {
+      const { viewportId, renderingEngineId } = getEnabledElement(element);
+      const renderingEngine = cornerstoneViewportService.getRenderingEngine();
+      if (!renderingEngine) {
+        return null;
+      }
+      const toolGroup = ToolGroupManager.getToolGroupForViewport(viewportId, renderingEngineId);
+      return {
+        element,
+        viewportId,
+        renderingEngineId,
+        renderingEngine,
+        toolGroup,
+      };
+    } catch (e) {
+      console.warn('CornerstoneViewportDownloadForm: viewport not ready for capture', e);
+      return null;
+    }
+  }, [activeViewportIdProp, cornerstoneViewportService]);
 
-  const renderingEngine = cornerstoneViewportService.getRenderingEngine();
-  const toolGroup = ToolGroupManager.getToolGroupForViewport(activeViewportId, renderingEngineId);
+  const activeViewportElement = captureContext?.element ?? null;
+  const activeViewportId = captureContext?.viewportId ?? '';
+  const renderingEngineId = captureContext?.renderingEngineId ?? '';
+  const renderingEngine = captureContext?.renderingEngine ?? null;
+  const toolGroup = captureContext?.toolGroup ?? null;
+
+  const captureFailureNotified = useRef(false);
 
   useEffect(() => {
+    if (captureContext !== null || !activeViewportIdProp || captureFailureNotified.current) {
+      return;
+    }
+    captureFailureNotified.current = true;
+    uiNotificationService?.show({
+      title: i18n.t('Tools:Download Image'),
+      message: i18n.t('Tools:Image cannot be downloaded'),
+      type: 'error',
+    });
+    hide();
+  }, [activeViewportIdProp, captureContext, hide, uiNotificationService]);
+
+  useEffect(() => {
+    if (!toolGroup?.toolOptions) {
+      return undefined;
+    }
+
     const toolModeAndBindings = Object.keys(toolGroup.toolOptions).reduce((acc, toolName) => {
       const tool = toolGroup.toolOptions[toolName];
       const { mode, bindings } = tool;
@@ -85,14 +133,18 @@ const CornerstoneViewportDownloadForm = ({
         }
       });
     };
-  }, []);
+  }, [toolGroup]);
 
   const handleEnableViewport = (viewportElement: HTMLElement) => {
-    if (!viewportElement) {
+    if (!viewportElement || !activeViewportElement || !renderingEngine) {
       return;
     }
 
-    const { viewport } = getEnabledElement(activeViewportElement);
+    const enabled = getEnabledElement(activeViewportElement);
+    if (!enabled?.viewport) {
+      return;
+    }
+    const { viewport } = enabled;
 
     const viewportInput = {
       viewportId: VIEWPORT_ID,
@@ -108,6 +160,9 @@ const CornerstoneViewportDownloadForm = ({
   };
 
   const handleDisableViewport = async () => {
+    if (!renderingEngine) {
+      return;
+    }
     renderingEngine.disableElement(VIEWPORT_ID);
   };
 
@@ -117,7 +172,7 @@ const CornerstoneViewportDownloadForm = ({
     }
 
     const activeViewportEnabledElement = getEnabledElement(activeViewportElement);
-    if (!activeViewportEnabledElement) {
+    if (!activeViewportEnabledElement || !renderingEngine) {
       return;
     }
 
@@ -126,7 +181,9 @@ const CornerstoneViewportDownloadForm = ({
 
     const { viewport } = activeViewportEnabledElement;
     const downloadViewport = renderingEngine.getViewport(VIEWPORT_ID);
-
+    if (!downloadViewport) {
+      return;
+    }
     try {
       // Capture current viewport state
       // - properties: VOI, colormap, interpolation, etc.
@@ -201,6 +258,9 @@ const CornerstoneViewportDownloadForm = ({
   };
 
   const handleToggleAnnotations = (show: boolean) => {
+    if (!activeViewportElement || !renderingEngine) {
+      return;
+    }
     const activeViewportEnabledElement = getEnabledElement(activeViewportElement);
     if (!activeViewportEnabledElement) {
       return;
@@ -214,35 +274,39 @@ const CornerstoneViewportDownloadForm = ({
     const { viewportId: activeViewportId, renderingEngineId } = activeViewportEnabledElement;
     const { id: downloadViewportId } = downloadViewport;
 
-    const toolGroup = ToolGroupManager.getToolGroupForViewport(activeViewportId, renderingEngineId);
-    toolGroup.addViewport(downloadViewportId, renderingEngineId);
+    const toolGroupLocal = ToolGroupManager.getToolGroupForViewport(activeViewportId, renderingEngineId);
+    if (!toolGroupLocal) {
+      return;
+    }
+    toolGroupLocal.addViewport(downloadViewportId, renderingEngineId);
 
-    const toolInstances = toolGroup.getToolInstances();
+    const toolInstances = toolGroupLocal.getToolInstances();
     const toolInstancesArray = Object.values(toolInstances);
 
     toolInstancesArray.forEach(toolInstance => {
       if (toolInstance.constructor.isAnnotation !== false) {
         if (show) {
-          toolGroup.setToolEnabled(toolInstance.toolName);
+          toolGroupLocal.setToolEnabled(toolInstance.toolName);
         } else {
-          toolGroup.setToolDisabled(toolInstance.toolName);
+          toolGroupLocal.setToolDisabled(toolInstance.toolName);
         }
       }
     });
   };
 
   useEffect(() => {
-    if (viewportDimensions.width && viewportDimensions.height) {
-      setTimeout(() => {
-        handleLoadImage(viewportDimensions.width, viewportDimensions.height);
-        handleToggleAnnotations(showAnnotations);
-        // we need a resize here to make suer annotations world to canvas
-        // are properly calculated
-        renderingEngine.resize();
-        renderingEngine.render();
-      }, 100);
+    if (!viewportDimensions.width || !viewportDimensions.height || !captureContext || !renderingEngine) {
+      return;
     }
-  }, [viewportDimensions, showAnnotations]);
+    setTimeout(() => {
+      void handleLoadImage(viewportDimensions.width, viewportDimensions.height);
+      handleToggleAnnotations(showAnnotations);
+      // we need a resize here to make suer annotations world to canvas
+      // are properly calculated
+      renderingEngine.resize();
+      renderingEngine.render();
+    }, 100);
+  }, [captureContext, renderingEngine, viewportDimensions, showAnnotations]);
 
   const handleDownload = async (baseFilename: string, fileType: string) => {
     const divForDownloadViewport = document.querySelector(
@@ -330,6 +394,10 @@ const CornerstoneViewportDownloadForm = ({
       .map(v => allChoices.find(o => o.value === v))
       .filter(Boolean) as typeof DEFAULT_FILE_TYPE_OPTIONS;
   }, [preferredFileFormats]);
+
+  if (!captureContext) {
+    return null;
+  }
 
   return (
     <ViewportDownloadFormNew

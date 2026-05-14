@@ -32,7 +32,16 @@ window.config = {
   enableStudyLazyLoad: true,
   maxNumberOfWebWorkers: 2,
   useSharedArrayBuffer: 'FALSE',
-  modes: ['@ohif/mode-longitudinal'],
+  /** أوضاع OHIF المجمّعة في pluginConfig — تفعيلها يظهر مسارات عرض مختلفة (/ohif/basic، segmentation، …). */
+  modes: [
+    '@ohif/mode-longitudinal',
+    '@ohif/mode-basic',
+    '@ohif/mode-segmentation',
+    '@ohif/mode-preclinical-4d',
+    '@ohif/mode-tmtv',
+    '@ohif/mode-microscopy',
+    '@ohif/mode-ultrasound-pleura-bline',
+  ],
   extensions: [],
   cornerstoneExtensionConfig: {
     imageRendering: 'pixelated',
@@ -47,27 +56,15 @@ window.config = {
   },
   customButtons: [
     {
-      id: 'downloadPdf',
-      label: 'تقرير PDF',
-      icon: 'file-pdf',
+      id: 'exportShareHub',
+      label: 'تصدير ومشاركة',
+      icon: 'external-link',
       type: 'command',
-      commandName: 'downloadPdfReport',
+      commandName: 'openViewerExportHubDialog',
       context: 'VIEWER',
     },
   ],
   commandsManager: {
-    commands: {
-      downloadPdfReport: {
-        commandFn: ({ servicesManager }) => {
-          const { viewportGridService } = servicesManager.services;
-          const { activeViewportId, viewports } = viewportGridService.getState();
-          const studyUID = viewports[activeViewportId]?.StudyInstanceUID;
-          if (studyUID) {
-            window.open(`/pacs/reports/pdf/${studyUID}`, '_blank');
-          }
-        },
-        storeReferences: true,
-      },
-    },
+    commands: {},
   },
 };
