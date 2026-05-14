@@ -32,6 +32,10 @@ interface ToolButtonProps {
   icon?: string;
   label?: string;
   tooltip?: string;
+  /** When true, renders icon and label text inside the button (toolbar / header tools). */
+  showLabel?: boolean;
+  /** When true, tooltip popup shows only `tooltip` (and optional disabled text), not `label`. */
+  hideLabelInTooltip?: boolean;
   size?: 'default' | 'small';
   isActive?: boolean;
   isToggled?: boolean;
@@ -49,6 +53,8 @@ function ToolButton(props: ToolButtonProps) {
     icon = 'MissingIcon',
     label,
     tooltip,
+    showLabel,
+    hideLabelInTooltip,
     size = 'default',
     disabled = false,
     isActive = false,
@@ -61,7 +67,10 @@ function ToolButton(props: ToolButtonProps) {
   } = props;
 
   const { className: iconClassName } = useIconPresentation();
-  const { buttonSizeClass, iconSizeClass } = sizeClasses[size] || sizeClasses.default;
+  const showLabelRow = Boolean(showLabel && label);
+  const { buttonSizeClass, iconSizeClass } = showLabelRow
+    ? { buttonSizeClass: '!h-9 min-h-9 w-auto shrink-0 gap-1.5 !px-3', iconSizeClass: 'h-5 w-5' }
+    : sizeClasses[size] || sizeClasses.default;
 
   const buttonClasses = cn(
     baseClasses,
@@ -74,7 +83,12 @@ function ToolButton(props: ToolButtonProps) {
   const disabledTooltip = disabled && disabledText ? disabledText : null;
   const hasSecondaryTooltip = tooltip || disabledTooltip;
 
-  const showTooltip = hasSecondaryTooltip || defaultTooltip;
+  const showTooltip = hideLabelInTooltip
+    ? Boolean(tooltip || disabledTooltip)
+    : hasSecondaryTooltip || Boolean(defaultTooltip);
+
+  const ariaLabel =
+    (hideLabelInTooltip && tooltip) || defaultTooltip || tooltip || disabledText || id;
 
   return (
     <Tooltip>
@@ -98,17 +112,28 @@ function ToolButton(props: ToolButtonProps) {
               }
             }}
             variant="ghost"
-            size="icon"
-            aria-label={defaultTooltip}
+            size={showLabelRow ? 'default' : 'icon'}
+            aria-label={typeof ariaLabel === 'string' ? ariaLabel : id}
             disabled={disabled}
             name={id}
           >
-            {children || (
-              <Icons.ByName
-                name={icon}
-                className={iconClassName || iconSizeClass}
-              />
-            )}
+            {children ||
+              (showLabelRow ? (
+                <>
+                  <Icons.ByName
+                    name={icon}
+                    className={cn(iconClassName || iconSizeClass, 'shrink-0')}
+                  />
+                  <span className="text-primary shrink-0 whitespace-nowrap text-sm font-bold leading-none tracking-tight">
+                    {label}
+                  </span>
+                </>
+              ) : (
+                <Icons.ByName
+                  name={icon}
+                  className={iconClassName || iconSizeClass}
+                />
+              ))}
           </Button>
         </span>
       </TooltipTrigger>
@@ -118,11 +143,22 @@ function ToolButton(props: ToolButtonProps) {
       >
         {showTooltip && (
           <div className="space-y-1">
-            {defaultTooltip && <div className="text-sm">{defaultTooltip}</div>}
-            {disabledTooltip ? (
-              <div className="text-muted-foreground text-xs">{disabledTooltip}</div>
+            {hideLabelInTooltip ? (
+              <>
+                {tooltip && <div className="text-sm">{tooltip}</div>}
+                {disabledTooltip && (
+                  <div className="text-muted-foreground text-xs">{disabledTooltip}</div>
+                )}
+              </>
             ) : (
-              tooltip && <div className="text-muted-foreground text-xs">{tooltip}</div>
+              <>
+                {defaultTooltip && <div className="text-sm">{defaultTooltip}</div>}
+                {disabledTooltip ? (
+                  <div className="text-muted-foreground text-xs">{disabledTooltip}</div>
+                ) : (
+                  tooltip && <div className="text-muted-foreground text-xs">{tooltip}</div>
+                )}
+              </>
             )}
           </div>
         )}

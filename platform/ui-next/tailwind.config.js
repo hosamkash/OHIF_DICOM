@@ -95,10 +95,15 @@ module.exports = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        'toolbar-export-float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-2px)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'toolbar-export-float': 'toolbar-export-float 5s cubic-bezier(0.42, 0, 0.58, 1) infinite',
       },
       bkg: {
         low: '#050615',
