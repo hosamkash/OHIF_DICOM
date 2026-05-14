@@ -96,24 +96,29 @@ interface FiletypeProps {
   className?: string;
   /** Array of file type options */
   options?: Array<{ value: string; label: string }>;
+  /** When true or when only one format exists, the control is non-interactive. */
+  disabled?: boolean;
 }
 
-function Filetype({ selected, onSelect, className, options = [] }: FiletypeProps) {
+function Filetype({ selected, onSelect, className, options = [], disabled }: FiletypeProps) {
   const defaultOptions = [
     { value: 'jpg', label: 'JPG' },
     { value: 'png', label: 'PNG' },
   ];
 
   const fileTypeOptions = options.length ? options : defaultOptions;
+  const isLocked = Boolean(disabled) || fileTypeOptions.length <= 1;
 
   return (
     <Select
       value={selected}
       onValueChange={val => onSelect?.(val)}
+      disabled={isLocked}
     >
       <SelectTrigger
         aria-label="File type"
         className={cn('w-[5.5rem] sm:w-24', className)}
+        disabled={isLocked}
       >
         <SelectValue />
       </SelectTrigger>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 interface ModalOptions {
   title?: string;
   shouldCloseOnEsc?: boolean;
+  shouldCloseOnOverlayClick?: boolean;
   content?: React.ComponentType;
   contentProps?: Record<string, unknown>;
   containerClassName?: string;

@@ -34,8 +34,8 @@ function VigilLandingPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(20,184,166,0.16),transparent_38%),radial-gradient(circle_at_80%_12%,rgba(167,139,250,0.18),transparent_32%),radial-gradient(circle_at_50%_85%,rgba(59,130,246,0.14),transparent_35%)]" />
 
       <main className="relative mx-auto grid min-h-full w-full max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[330px_1fr] lg:px-10">
-        <aside className="rounded-3xl border border-teal-200/15 bg-slate-950/70 p-6 shadow-2xl shadow-black/35 backdrop-blur">
-          <p className="vigil-aside-brand text-center text-lg font-bold tracking-[0.2em] uppercase">
+        <aside className="border-teal-200/15 bg-slate-950/70 shadow-black/35 rounded-3xl border p-6 shadow-2xl backdrop-blur">
+          <p className="vigil-aside-brand text-center text-lg font-bold uppercase tracking-[0.2em]">
             Vigil Hub
           </p>
           <p className="vigil-intro-muted mt-2 text-sm leading-7">
@@ -58,7 +58,9 @@ function VigilLandingPage() {
           </div>
 
           <div className="mt-8 space-y-3">
-            <p className="vigil-contact-label text-lg tracking-[0.25em] uppercase">بيانات التواصل</p>
+            <p className="vigil-contact-label text-lg uppercase tracking-[0.25em]">
+              بيانات التواصل
+            </p>
             <a
               href="tel:01004232647"
               className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/10 bg-slate-900/70 px-4 py-3 text-sm transition hover:border-teal-300/40"
@@ -93,37 +95,40 @@ function VigilLandingPage() {
         </aside>
 
         <section className="flex flex-col gap-6">
-          <div className="rounded-3xl border border-violet-300/20 bg-gradient-to-b from-violet-500/15 via-cyan-400/10 to-transparent p-7 shadow-2xl shadow-cyan-950/40 sm:p-10">
+          <div className="from-violet-500/15 shadow-cyan-950/40 rounded-3xl border border-violet-300/20 bg-gradient-to-b via-cyan-400/10 to-transparent p-7 shadow-2xl sm:p-10">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-cyan-300/40 bg-cyan-300/10 px-4 py-1 uppercase">
                 <span className="vigil-badge-soft text-[10px] font-semibold tracking-[0.18em]">
                   Advanced Experience
                 </span>
-                <span className="vigil-badge-strong text-sm font-extrabold tracking-[0.28em]">OHIF</span>
+                <span className="vigil-badge-strong text-sm font-extrabold tracking-[0.28em]">
+                  OHIF
+                </span>
               </span>
+
               <Link
                 to={OHIF_VIEWER_HOME_PATH}
-                className="vigil-cta inline-flex items-center gap-3 rounded-2xl border border-teal-300/40 bg-teal-300/10 px-5 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-teal-300/20 animate-[float_3s_ease-in-out_infinite]"
+                className="vigil-cta inline-flex animate-[float_3s_ease-in-out_infinite] items-center gap-3 rounded-2xl border border-teal-300/40 bg-teal-300/10 px-5 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-teal-300/20"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-300/20">
-                  <svg
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                  >
-                    <path d="M12 3 3 8l9 5 9-5-9-5Z" />
-                    <path d="m3 12 9 5 9-5" />
-                    <path d="m3 16 9 5 9-5" />
-                  </svg>
-                </span>
-                ابدأ الآن OHIF Viewer
-              </Link>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-300/20">
+                    <svg
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    >
+                      <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+                      <path d="m3 12 9 5 9-5" />
+                      <path d="m3 16 9 5 9-5" />
+                    </svg>
+                  </span>
+                  ابدأ الآن OHIF Viewer
+                </Link>
             </div>
 
-            <h1 className="mt-6 text-3xl leading-tight font-bold text-white sm:text-5xl sm:leading-[1.2]">
+            <h1 className="mt-6 text-3xl font-bold leading-tight text-white sm:text-5xl sm:leading-[1.2]">
               تجربة مختلفة لإدارة التصوير الطبي
               <span className="vigil-grad mt-2 block bg-gradient-to-l from-teal-200 to-violet-200 bg-clip-text">
                 لمراكز الأشعة المتخصصة والمستشفيات
@@ -131,20 +136,20 @@ function VigilLandingPage() {
             </h1>
 
             <p className="mt-6 max-w-3xl text-sm leading-8 sm:text-lg">
-              هذه الواجهة تقدم تصورًا حديثًا لخبرتنا في بناء وتخصيص حلول OHIF للجهات التي تعتمد على أجهزة
-              الأشعة الحديثة، مع توازن واضح بين الأداء الطبي والهوية المؤسسية الراقية.
+              هذه الواجهة تقدم تصورًا حديثًا لخبرتنا في بناء وتخصيص حلول OHIF للجهات التي تعتمد على
+              أجهزة الأشعة الحديثة، مع توازن واضح بين الأداء الطبي والهوية المؤسسية الراقية.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-4">
+              <div className="bg-slate-950/55 rounded-2xl border border-white/10 px-4 py-4">
                 <p className="vigil-card-muted text-xs">Specialized</p>
                 <p className="vigil-card-title mt-1 text-sm font-semibold">Radiology Ready</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-4">
+              <div className="bg-slate-950/55 rounded-2xl border border-white/10 px-4 py-4">
                 <p className="vigil-card-muted text-xs">DICOM First</p>
                 <p className="vigil-card-title mt-1 text-sm font-semibold">Workflow Focused</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-slate-950/55 px-4 py-4">
+              <div className="bg-slate-950/55 rounded-2xl border border-white/10 px-4 py-4">
                 <p className="vigil-card-muted text-xs">Enterprise</p>
                 <p className="vigil-card-title mt-1 text-sm font-semibold">Scalable Integration</p>
               </div>
@@ -157,8 +162,8 @@ function VigilLandingPage() {
               <ul className="mt-4 space-y-4 text-sm leading-8">
                 <li>
                   <span className="vigil-li-marker me-2">1.</span>
-                  نقدم منصة تعكس عمق خبرتنا العملية مع بيئات الأشعة التشخيصية، وتركز على تقديم تجربة واضحة
-                  واحترافية من أول زيارة.
+                  نقدم منصة تعكس عمق خبرتنا العملية مع بيئات الأشعة التشخيصية، وتركز على تقديم تجربة
+                  واضحة واحترافية من أول زيارة.
                 </li>
                 <li>
                   <span className="vigil-li-marker me-2">2.</span>
@@ -182,7 +187,7 @@ function VigilLandingPage() {
               </p>
               <Link
                 to={OHIF_VIEWER_HOME_PATH}
-                className="vigil-cta mt-6 inline-flex items-center gap-3 rounded-2xl border border-teal-300/40 bg-teal-300/10 px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-teal-300/20 animate-[float_3s_ease-in-out_infinite]"
+                className="vigil-cta mt-6 inline-flex animate-[float_3s_ease-in-out_infinite] items-center gap-3 rounded-2xl border border-teal-300/40 bg-teal-300/10 px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-teal-300/20"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-teal-300/20">
                   <svg

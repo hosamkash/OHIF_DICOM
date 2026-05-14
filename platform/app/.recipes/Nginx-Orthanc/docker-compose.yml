@@ -35,9 +35,13 @@ services:
     image: jodogne/orthanc-plugins
     hostname: orthanc
     container_name: orthancPACS
+    environment:
+      # Must be explicit with RemoteAccessAllowed=true, else Orthanc enables HTTP auth by default.
+      ORTHANC__AUTHENTICATION_ENABLED: 'false'
     volumes:
       # Config
       - ./config/orthanc.json:/etc/orthanc/orthanc.json:ro
+      - ./plugins/validation.py:/etc/orthanc/validation.py:ro
       # Persist data
       - ./volumes/orthanc-db/:/var/lib/orthanc/db/
     restart: unless-stopped

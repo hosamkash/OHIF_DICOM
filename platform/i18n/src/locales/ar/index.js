@@ -1,6 +1,7 @@
 import AboutModal from './AboutModal.json';
 import Buttons from './Buttons.json';
 import CineDialog from './CineDialog.json';
+import CaptureViewportModal from './CaptureViewportModal.json';
 import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
 import DatePicker from './DatePicker.json';
@@ -27,6 +28,7 @@ export default {
   ar: {
     AboutModal,
     Buttons,
+    CaptureViewportModal,
     CineDialog,
     Common,
     DataSourceConfiguration,

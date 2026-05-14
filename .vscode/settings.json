@@ -1,4 +1,5 @@
 {
+  "npm.packageManager": "yarn",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.rulers": [80, 120],
   // ===

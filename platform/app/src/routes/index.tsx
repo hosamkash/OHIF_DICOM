@@ -4,7 +4,7 @@ import { ErrorBoundary } from '@ohif/ui-next';
 
 // Route Components
 import DataSourceWrapper from './DataSourceWrapper';
-import WorkList from './WorkList';
+import PageCasesTableWorkList from './WorkList/PageCasesTableWorkList';
 import Local from './Local';
 import Debug from './Debug';
 import NotFound from './NotFound';
@@ -132,10 +132,12 @@ const createRoutes = ({
     path: OHIF_VIEWER_HOME_PATH,
     children: DataSourceWrapper,
     private: true,
-    props: { children: WorkList, servicesManager, extensionManager },
+    props: { children: PageCasesTableWorkList, servicesManager, extensionManager },
   };
 
-  const customRoutes = customizationService.getCustomization('routes.customRoutes');
+  const customRoutes = customizationService.getCustomization('routes.customRoutes') as
+    | { routes?: Array<any>; notFoundRoute?: any }
+    | undefined;
 
   const allRoutes = [
     LandingRoute,
@@ -158,14 +160,16 @@ const createRoutes = ({
         context={`Route ${route.path}`}
         showErrorDetails={showErrorDetails}
       >
-        <route.children
-          {...rest}
-          {...route.props}
-          route={route}
-          servicesManager={servicesManager}
-          extensionManager={extensionManager}
-          hotkeysManager={hotkeysManager}
-        />
+        <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+          <route.children
+            {...rest}
+            {...route.props}
+            route={route}
+            servicesManager={servicesManager}
+            extensionManager={extensionManager}
+            hotkeysManager={hotkeysManager}
+          />
+        </div>
       </ErrorBoundary>
     );
   }
@@ -176,8 +180,9 @@ const createRoutes = ({
   // to check if it is enabled or not
   // Todo: I think we can remove the second public return below
   return (
-    <Routes>
-      {allRoutes.map((route, i) => {
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+      <Routes>
+        {allRoutes.map((route, i) => {
         return route.private === true ? (
           <Route
             key={i}
@@ -197,8 +202,9 @@ const createRoutes = ({
             element={<RouteWithErrorBoundary route={route} />}
           />
         );
-      })}
-    </Routes>
+        })}
+      </Routes>
+    </div>
   );
 };
 

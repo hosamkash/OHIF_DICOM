@@ -27,7 +27,7 @@ export function VigilHeaderLogo({ variant = 'header' }: VigilHeaderLogoProps) {
 
   return (
     <div
-      className="flex items-center gap-2 select-none"
+      className="flex min-w-0 max-w-full items-center gap-2 select-none"
       aria-label="Vigil DICOM Viewr"
     >
       <img
@@ -36,7 +36,7 @@ export function VigilHeaderLogo({ variant = 'header' }: VigilHeaderLogoProps) {
         className={imgClass}
         draggable={false}
       />
-      <span className={titleClass}>Vigil DICOM Viewr</span>
+      <span className={`min-w-0 truncate ${titleClass}`}>Vigil DICOM Viewr</span>
     </div>
   );
 }

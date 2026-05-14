@@ -99,6 +99,25 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
   const loadedExtensions = await loadModules([...defaultExtensions, ...appConfig.extensions]);
   await extensionManager.registerExtensions(loadedExtensions, appConfig.dataSources);
 
+  const appCommands = appConfig.commandsManager?.commands;
+  if (appCommands && typeof appCommands === 'object') {
+    const commandContext = 'VIEWER';
+    if (!commandsManager.getContext(commandContext)) {
+      commandsManager.createContext(commandContext);
+    }
+    Object.keys(appCommands).forEach(commandName => {
+      let commandDefinition = appCommands[commandName];
+      if (typeof commandDefinition === 'function') {
+        commandDefinition = { commandFn: commandDefinition };
+      }
+      commandsManager.registerCommand(
+        commandDefinition.context || commandContext,
+        commandName,
+        commandDefinition
+      );
+    });
+  }
+
   // TODO: We no longer use `utils.addServer`
   // TODO: We no longer init webWorkers at app level
   // TODO: We no longer init the user Manager
