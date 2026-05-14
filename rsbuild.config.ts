@@ -25,6 +25,16 @@ const ORTHANC_DEV_URL = process.env.ORTHANC_DEV_URL || 'http://localhost:8042';
 const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
 const OHIF_OPEN = process.env.OHIF_OPEN !== 'false';
 
+// package.json is not in "exports"; resolve decoder file via repo node_modules path
+const dicomImageLoaderDecodeJpegLosslessPath = path.join(
+  __dirname,
+  'node_modules/@cornerstonejs/dicom-image-loader/dist/esm/shared/decoders/decodeJPEGLossless.js'
+);
+const decodeJPEGLosslessInlinedShim = path.resolve(
+  __dirname,
+  './extensions/cornerstone/src/shims/decodeJPEGLosslessInlined.ts'
+);
+
 export default defineConfig({
   // Rsbuild defaults dev.lazyCompilation.imports to true, which emits lazy-compilation-proxy
   // chunks. Those load via importScripts inside @cornerstonejs/dicom-image-loader workers and
@@ -98,6 +108,7 @@ export default defineConfig({
       '@hooks': path.resolve(__dirname, './platform/app/src/hooks'),
       '@routes': path.resolve(__dirname, './platform/app/src/routes'),
       '@state': path.resolve(__dirname, './platform/app/src/state'),
+      [dicomImageLoaderDecodeJpegLosslessPath]: decodeJPEGLosslessInlinedShim,
     },
   },
   output: {

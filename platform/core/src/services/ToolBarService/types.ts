@@ -55,6 +55,8 @@ export type ButtonProps = {
   isActive?: boolean;
   label: string;
   tooltip?: string;
+  showLabel?: boolean;
+  hideLabelInTooltip?: boolean;
   commands?: RunCommand;
   disabled?: boolean;
   className?: string;
@@ -62,7 +64,6 @@ export type ButtonProps = {
   listeners?: Record<string, RunCommand>;
   options?: ButtonOptions[];
   buttonSection?: string | boolean;
-  isActive?: boolean;
 };
 
 export type Button = {

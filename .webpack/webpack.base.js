@@ -33,6 +33,16 @@ const VERSION_NUMBER = fs.readFileSync(path.join(__dirname, '../version.txt'), '
 
 const COMMIT_HASH = fs.readFileSync(path.join(__dirname, '../commit.txt'), 'utf8') || '';
 
+// package.json is not in "exports"; resolve decoder file via repo node_modules path
+const dicomImageLoaderDecodeJpegLosslessPath = path.join(
+  __dirname,
+  '../node_modules/@cornerstonejs/dicom-image-loader/dist/esm/shared/decoders/decodeJPEGLossless.js'
+);
+const decodeJPEGLosslessInlinedShim = path.resolve(
+  __dirname,
+  '../extensions/cornerstone/src/shims/decodeJPEGLosslessInlined.ts'
+);
+
 //
 dotenv.config();
 
@@ -201,6 +211,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
         '@hooks': path.resolve(__dirname, '../platform/app/src/hooks'),
         '@routes': path.resolve(__dirname, '../platform/app/src/routes'),
         '@state': path.resolve(__dirname, '../platform/app/src/state'),
+        [dicomImageLoaderDecodeJpegLosslessPath]: decodeJPEGLosslessInlinedShim,
       },
       // Which directories to search when resolving modules
       modules: [
