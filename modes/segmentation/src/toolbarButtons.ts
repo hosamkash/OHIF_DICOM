@@ -1,5 +1,5 @@
 import type { Button } from '@ohif/core/types';
-import { ViewportGridService } from '@ohif/core';
+import { ViewportGridService, pdfExportToolbarButton } from '@ohif/core';
 import i18n from 'i18next';
 
 import { MIN_SEGMENTATION_DRAWING_RADIUS, MAX_SEGMENTATION_DRAWING_RADIUS } from './constants';
@@ -250,27 +250,7 @@ export const toolbarButtons: Button[] = [
       },
     },
   },
-  {
-    id: 'PdfExport',
-    uiType: 'ohif.toolButton',
-    props: {
-      icon: 'Export',
-      label: 'Export',
-      tooltip: 'Export File',
-      showLabel: true,
-      hideLabelInTooltip: true,
-      className:
-        'relative z-[2] mx-5 animate-toolbar-export-float !rounded-xl border border-primary/40 bg-background/95 shadow-lg shadow-primary/20 ring-2 ring-primary/30 backdrop-blur-sm transition-all duration-300 hover:animate-none hover:-translate-y-0.5 hover:border-primary/70 hover:bg-primary/15 hover:shadow-xl hover:ring-primary/50 active:translate-y-0 active:scale-[0.98]',
-      commands: 'showDownloadViewportPdfModal',
-      evaluate: [
-        'evaluate.action',
-        {
-          name: 'evaluate.viewport.supported',
-          unsupportedViewportTypes: ['video', 'wholeSlide'],
-        },
-      ],
-    },
-  },
+  pdfExportToolbarButton,
   {
     id: 'Layout',
     uiType: 'ohif.layoutSelector',

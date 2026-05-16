@@ -149,6 +149,57 @@ export async function orthancDeleteStudy(
   }
 }
 
+/** Orthanc REST: delete one instance. */
+export async function orthancDeleteInstance(
+  orthancRestRoot: string,
+  orthancInstanceId: string,
+  authHeaders: Record<string, string>,
+  signal?: AbortSignal
+): Promise<void> {
+  const base = resolveOrthancApiUrl(orthancRestRoot);
+  const res = await fetch(`${base}/instances/${encodeURIComponent(orthancInstanceId)}`, {
+    method: 'DELETE',
+    signal,
+    credentials: 'include',
+    headers: mergeHeaders(authHeaders, { Accept: 'application/json' }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(
+      `Orthanc delete instance failed: ${res.status}${detail ? ` — ${detail.slice(0, 200)}` : ''}`
+    );
+  }
+}
+
+/** Remove all instances from a study (keeps study shell; used before manual image replace). */
+export async function orthancClearStudyInstances(
+  orthancRestRoot: string,
+  orthancStudyId: string,
+  authHeaders: Record<string, string>,
+  signal?: AbortSignal
+): Promise<void> {
+  const base = resolveOrthancApiUrl(orthancRestRoot);
+  const res = await fetch(`${base}/studies/${encodeURIComponent(orthancStudyId)}`, {
+    method: 'GET',
+    signal,
+    credentials: 'include',
+    headers: mergeHeaders(authHeaders, { Accept: 'application/json' }),
+  });
+  if (!res.ok) {
+    throw new Error(`Orthanc get study failed: ${res.status}`);
+  }
+  const data = (await res.json()) as { Instances?: unknown };
+  const instanceIds = Array.isArray(data.Instances)
+    ? data.Instances.filter((id): id is string => typeof id === 'string')
+    : [];
+  for (const instanceId of instanceIds) {
+    if (signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+    await orthancDeleteInstance(orthancRestRoot, instanceId, authHeaders, signal);
+  }
+}
+
 /** Orthanc REST: anonymize study (Explorer 2 / default rules on server). @see https://book.orthanc-server.com/users/rest.html */
 export async function orthancAnonymizeStudy(
   orthancRestRoot: string,
@@ -246,4 +297,210 @@ export async function orthancDeleteStudyLabel(
   if (!res.ok) {
     throw new Error(`Orthanc remove label failed: ${res.status}`);
   }
+}
+
+export type OrthancMainDicomTags = {
+  StudyInstanceUID?: string;
+  PatientID?: string;
+  PatientName?: string;
+  AccessionNumber?: string;
+  StudyDescription?: string;
+  StudyDate?: string;
+  StudyTime?: string;
+};
+
+export async function orthancGetStudyMainTags(
+  orthancRestRoot: string,
+  orthancStudyId: string,
+  authHeaders: Record<string, string>,
+  signal?: AbortSignal
+): Promise<OrthancMainDicomTags> {
+  const base = resolveOrthancApiUrl(orthancRestRoot);
+  const res = await fetch(`${base}/studies/${encodeURIComponent(orthancStudyId)}`, {
+    method: 'GET',
+    signal,
+    credentials: 'include',
+    headers: mergeHeaders(authHeaders, { Accept: 'application/json' }),
+  });
+  if (!res.ok) {
+    throw new Error(`Orthanc get study failed: ${res.status}`);
+  }
+  const data = (await res.json()) as { MainDicomTags?: OrthancMainDicomTags };
+  return data.MainDicomTags || {};
+}
+
+type OrthancStoredInstance = {
+  ID?: string;
+  ParentStudy?: string;
+  Status?: string;
+};
+
+function parseOrthancStoreResponse(body: unknown): OrthancStoredInstance[] {
+  if (Array.isArray(body)) {
+    return body.filter((x): x is OrthancStoredInstance => x && typeof x === 'object');
+  }
+  if (body && typeof body === 'object') {
+    return [body as OrthancStoredInstance];
+  }
+  return [];
+}
+
+async function orthancGetInstanceStudyInstanceUID(
+  orthancRestRoot: string,
+  instanceId: string,
+  authHeaders: Record<string, string>,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const base = resolveOrthancApiUrl(orthancRestRoot);
+  const res = await fetch(`${base}/instances/${encodeURIComponent(instanceId)}/simplified-tags`, {
+    method: 'GET',
+    signal,
+    credentials: 'include',
+    headers: mergeHeaders(authHeaders, { Accept: 'application/json' }),
+  });
+  if (!res.ok) {
+    return null;
+  }
+  const tags = (await res.json()) as Record<string, string>;
+  const uid = tags.StudyInstanceUID || tags['0020,000D'];
+  return uid ? String(uid).trim() : null;
+}
+
+async function verifyInstancesBelongToStudy(
+  orthancRestRoot: string,
+  orthancStudyId: string,
+  stored: OrthancStoredInstance[],
+  expectedStudyInstanceUid: string,
+  authHeaders: Record<string, string>,
+  signal?: AbortSignal
+): Promise<void> {
+  const expected = expectedStudyInstanceUid.trim();
+  for (const row of stored) {
+    if (!row.ID) {
+      continue;
+    }
+    const uid = await orthancGetInstanceStudyInstanceUID(
+      orthancRestRoot,
+      row.ID,
+      authHeaders,
+      signal
+    );
+    if (uid) {
+      if (uid !== expected) {
+        throw new Error(
+          `تم رفع الملف لكن StudyInstanceUID على الخادم (${uid}) لا يطابق الدراسة المفتوحة.`
+        );
+      }
+      continue;
+    }
+    if (row.ParentStudy && row.ParentStudy !== orthancStudyId) {
+      throw new Error('تم رفع الملف لكنه أُضيف لدراسة أخرى. حاول مرة أخرى أو تحقق من ملف DICOM.');
+    }
+  }
+}
+
+/**
+ * Store a DICOM instance via Orthanc REST `POST /instances` (same as manual upload in Explorer).
+ */
+export function orthancUploadInstanceToStudy(
+  orthancRestRoot: string,
+  orthancStudyId: string,
+  dicomBuffer: ArrayBuffer,
+  authHeaders: Record<string, string>,
+  options?: {
+    expectedStudyInstanceUid?: string;
+    signal?: AbortSignal;
+    onProgress?: (percent: number) => void;
+  }
+): Promise<void> {
+  const base = resolveOrthancApiUrl(orthancRestRoot);
+  const url = `${base}/instances`;
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url);
+    xhr.responseType = 'json';
+    xhr.withCredentials = true;
+
+    const headers = mergeHeaders(authHeaders, {
+      Accept: 'application/json',
+      'Content-Type': 'application/dicom',
+    });
+    for (const [k, v] of Object.entries(headers)) {
+      xhr.setRequestHeader(k, v);
+    }
+
+    const signal = options?.signal;
+    const onAbort = () => {
+      xhr.abort();
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    if (signal?.aborted) {
+      onAbort();
+      return;
+    }
+    signal?.addEventListener('abort', onAbort);
+
+    xhr.upload.onprogress = evt => {
+      if (evt.lengthComputable && options?.onProgress) {
+        options.onProgress(Math.round((100 * evt.loaded) / evt.total));
+      }
+    };
+
+    xhr.onload = () => {
+      signal?.removeEventListener('abort', onAbort);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const stored = parseOrthancStoreResponse(xhr.response);
+        const expectedUid = options?.expectedStudyInstanceUid?.trim();
+        if (expectedUid && stored.some(r => r.ID)) {
+          void verifyInstancesBelongToStudy(
+            orthancRestRoot,
+            orthancStudyId,
+            stored,
+            expectedUid,
+            authHeaders,
+            signal
+          )
+            .then(() => resolve())
+            .catch(reject);
+          return;
+        }
+        const parentStudy = stored.find(r => r.ParentStudy)?.ParentStudy;
+        if (parentStudy && parentStudy !== orthancStudyId) {
+          reject(
+            new Error(
+              'تم رفع الملف لكنه أُضيف لدراسة أخرى. حاول مرة أخرى أو تحقق من ملف DICOM.'
+            )
+          );
+          return;
+        }
+        resolve();
+        return;
+      }
+      let detail = xhr.statusText;
+      if (typeof xhr.response === 'string') {
+        detail = xhr.response;
+      } else if (xhr.response && typeof xhr.response === 'object') {
+        const err = xhr.response as { Message?: string; Details?: string };
+        detail = err.Message || err.Details || detail;
+      }
+      reject(
+        new Error(
+          `Orthanc upload instance failed: ${xhr.status}${detail ? ` — ${String(detail).slice(0, 200)}` : ''}`
+        )
+      );
+    };
+
+    xhr.onerror = () => {
+      signal?.removeEventListener('abort', onAbort);
+      reject(new Error('Orthanc upload instance failed: network error'));
+    };
+
+    xhr.onabort = () => {
+      signal?.removeEventListener('abort', onAbort);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+
+    xhr.send(dicomBuffer);
+  });
 }

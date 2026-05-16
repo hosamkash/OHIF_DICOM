@@ -111,6 +111,7 @@ function modeFactory({ modeConfiguration }) {
         'Zoom',
         'Pan',
         'TrackballRotate',
+        'PdfExport',
         'WindowLevel',
         'Capture',
         'Layout',

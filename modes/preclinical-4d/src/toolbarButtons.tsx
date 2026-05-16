@@ -1,5 +1,5 @@
 import { toolGroupIds } from './initToolGroups';
-import { ViewportGridService } from '@ohif/core';
+import { ViewportGridService, pdfExportToolbarButton } from '@ohif/core';
 import i18n from 'i18next';
 
 const setToolActiveToolbar = {
@@ -185,6 +185,7 @@ const toolbarButtons = [
       evaluate: 'evaluate.cornerstoneTool',
     },
   },
+  pdfExportToolbarButton,
   {
     id: 'Capture',
     uiType: 'ohif.toolButton',

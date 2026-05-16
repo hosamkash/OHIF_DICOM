@@ -97,6 +97,7 @@ function modeFactory() {
         'Zoom',
         'WindowLevelGroup',
         'Pan',
+        'PdfExport',
         'Capture',
         'Layout',
         'MPR',

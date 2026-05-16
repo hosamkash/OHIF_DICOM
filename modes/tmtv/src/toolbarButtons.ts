@@ -1,3 +1,4 @@
+import { pdfExportToolbarButton } from '@ohif/core';
 import { toolGroupIds } from './initToolGroups';
 import i18n from 'i18next';
 
@@ -163,6 +164,7 @@ const toolbarButtons = [
       evaluate: 'evaluate.cornerstoneTool',
     },
   },
+  pdfExportToolbarButton,
   {
     id: 'Crosshairs',
     uiType: 'ohif.toolButton',

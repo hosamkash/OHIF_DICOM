@@ -1,4 +1,5 @@
 import type { Button } from '@ohif/core/types';
+import { pdfExportToolbarButton } from '@ohif/core';
 import i18n from 'i18next';
 
 export const setToolActiveToolbar = {
@@ -125,6 +126,7 @@ const toolbarButtons: Button[] = [
       evaluate: 'evaluate.microscopyTool',
     },
   },
+  pdfExportToolbarButton,
   {
     id: 'TagBrowser',
     uiType: 'ohif.toolButton',
