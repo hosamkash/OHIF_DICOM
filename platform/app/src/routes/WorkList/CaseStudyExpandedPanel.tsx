@@ -7,13 +7,16 @@ import {
   authorizationHeaderFromUserAuth,
   buildOrthancExplorerFilteredStudiesUrl,
   getOrthancRestRootFromDataSource,
+  orthancDeleteSeriesBySeriesInstanceUid,
   orthancDeleteStudy,
   orthancDeleteStudyLabel,
   orthancFindStudyId,
   orthancGetStudyLabels,
   orthancPutStudyLabel,
 } from '../../lib/orthanc-study-labels';
+import { VIGIL_STUDY_ANCHOR_SERIES_DESCRIPTION } from '../../lib/remap-dicom-to-study';
 import StudyInstancesUpload from './StudyInstancesUpload';
+import SeriesThumbnailCell from './SeriesThumbnailCell';
 
 const IconEye = getLucideIcon('Eye');
 const IconLayoutGrid = getLucideIcon('LayoutGrid');
@@ -61,6 +64,7 @@ export type ExpandedStudyShape = {
 };
 
 export type SeriesListItem = {
+  seriesInstanceUid?: string;
   seriesNumber?: string;
   description?: string;
   modality?: string;
@@ -86,6 +90,14 @@ function displayOrDash(value: unknown) {
   }
   const s = String(value).trim();
   return s.length ? s : '—';
+}
+
+function displaySeriesDescription(value: unknown) {
+  const s = value === undefined || value === null ? '' : String(value).trim();
+  if (s === VIGIL_STUDY_ANCHOR_SERIES_DESCRIPTION) {
+    return 'احتفاظ بالحالة (جاهزة لرفع ملفات)';
+  }
+  return displayOrDash(value);
 }
 
 function CopyValueButton({
@@ -242,6 +254,9 @@ export default function CaseStudyExpandedPanel({
   const [otherLoading, setOtherLoading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [seriesDeleteTarget, setSeriesDeleteTarget] = useState<SeriesListItem | null>(null);
+  const [seriesDeleteLoading, setSeriesDeleteLoading] = useState(false);
+  const [seriesRefreshKey, setSeriesRefreshKey] = useState(0);
 
   useEffect(() => {
     const ds = dataSource as {
@@ -273,7 +288,7 @@ export default function CaseStudyExpandedPanel({
     return () => {
       cancelled = true;
     };
-  }, [dataSource, study.studyInstanceUid]);
+  }, [dataSource, study.studyInstanceUid, seriesRefreshKey]);
 
   useEffect(() => {
     const ds = dataSource as {
@@ -318,6 +333,10 @@ export default function CaseStudyExpandedPanel({
   }, [dataSource, study.mrn, study.studyInstanceUid]);
 
   const orthancRestRoot = useMemo(() => getOrthancRestRootFromDataSource(dataSource), [dataSource]);
+  const wadoRoot = useMemo(() => {
+    const ds = dataSource as { getConfig?: () => { wadoRoot?: string } };
+    return ds?.getConfig?.()?.wadoRoot?.trim() || null;
+  }, [dataSource]);
 
   useEffect(() => {
     orthancStudyIdRef.current = null;
@@ -489,8 +508,13 @@ export default function CaseStudyExpandedPanel({
             studyTime: study.time,
           }}
           orthancRestRoot={orthancRestRoot}
+          wadoRoot={wadoRoot}
           readAuthHeaders={readAuthHeaders}
           onComplete={() => {
+            const ds = dataSource as {
+              deleteStudyMetadataPromise?: (studyInstanceUID: string) => void;
+            };
+            ds.deleteStudyMetadataPromise?.(study.studyInstanceUid);
             hide();
             onAfterStudyMutation?.();
           }}
@@ -505,9 +529,11 @@ export default function CaseStudyExpandedPanel({
     };
     show(uploadProps as never);
   }, [
+    dataSource,
     hide,
     onAfterStudyMutation,
     orthancRestRoot,
+    wadoRoot,
     readAuthHeaders,
     show,
     study.accession,
@@ -520,6 +546,7 @@ export default function CaseStudyExpandedPanel({
   ]);
 
   const orthancServerActionsEnabled = Boolean(orthancRestRoot && study.studyInstanceUid);
+  const seriesTableColSpan = orthancServerActionsEnabled ? 6 : 4;
 
   return (
     <div
@@ -712,31 +739,41 @@ export default function CaseStudyExpandedPanel({
         {/* السلاسل (Series) */}
         <div className="mt-4">
           <h3 className="mb-2 text-sm font-bold text-slate-800">السلاسل (Series)</h3>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full text-right text-sm">
-              <thead className="bg-slate-100/90 text-xs font-semibold text-slate-600">
+          <p className="mb-2 text-xs text-slate-500">
+            عمود «معاينة» يعرض صورة السلسلة قبل الحذف. «حذف» يزيل ملفاً/سلسلة فقط — الحالة تبقى
+            في القائمة. حذف الدراسة كاملة من زر «حذف Orthanc» أعلاه.
+          </p>
+          <div className="case-study-series-table isolate overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm [&_table]:w-full [&_table]:bg-white [&_tbody]:bg-white [&_tbody_tr]:!bg-white [&_tbody_tr:nth-child(odd)]:!bg-slate-50 [&_td]:!bg-transparent [&_td]:!text-slate-900 [&_th]:!border-0 [&_th]:!bg-slate-50 [&_th]:!text-slate-800">
+            <table className="w-full text-right text-sm text-slate-900">
+              <thead className="bg-slate-50 text-xs font-semibold text-slate-800">
                 <tr>
-                  <th className="px-3 py-2">رقم السلسلة</th>
-                  <th className="px-3 py-2">وصف السلسلة</th>
-                  <th className="px-3 py-2">الجهاز</th>
-                  <th className="px-3 py-2">عدد الصور</th>
+                  {orthancServerActionsEnabled ? (
+                    <th className="w-24 px-3 py-2 text-center text-slate-800">معاينة</th>
+                  ) : null}
+                  <th className="px-3 py-2 text-slate-800">رقم السلسلة</th>
+                  <th className="px-3 py-2 text-slate-800">وصف السلسلة</th>
+                  <th className="px-3 py-2 text-slate-800">الجهاز</th>
+                  <th className="px-3 py-2 text-slate-800">عدد الصور</th>
+                  {orthancServerActionsEnabled ? (
+                    <th className="w-20 px-3 py-2 text-center text-slate-800">حذف</th>
+                  ) : null}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white text-slate-900">
                 {seriesLoading ? (
-                  <tr>
+                  <tr className="bg-white">
                     <td
-                      colSpan={4}
-                      className="px-3 py-6 text-center text-slate-500"
+                      colSpan={seriesTableColSpan}
+                      className="bg-white px-3 py-6 text-center text-slate-600"
                     >
                       جاري تحميل السلاسل…
                     </td>
                   </tr>
                 ) : series.length === 0 ? (
-                  <tr>
+                  <tr className="bg-white">
                     <td
-                      colSpan={4}
-                      className="px-3 py-6 text-center text-slate-500"
+                      colSpan={seriesTableColSpan}
+                      className="bg-white px-3 py-6 text-center text-slate-600"
                     >
                       لا توجد سلاسل أو تعذر تحميلها. يُعرض ملخص الدراسة فقط.
                     </td>
@@ -744,21 +781,49 @@ export default function CaseStudyExpandedPanel({
                 ) : (
                   series.map((s, idx) => (
                     <tr
-                      key={`${s.seriesNumber}-${idx}`}
-                      className="border-t border-slate-100 odd:bg-slate-50/40"
+                      key={s.seriesInstanceUid || `${s.seriesNumber}-${idx}`}
+                      className="border-t border-slate-200 bg-white odd:bg-slate-50"
                     >
-                      <td className="px-3 py-2 font-mono text-xs">
+                      {orthancServerActionsEnabled && orthancRestRoot ? (
+                        <td className="bg-inherit px-2 py-2 text-center">
+                          <SeriesThumbnailCell
+                            orthancRestRoot={orthancRestRoot}
+                            studyInstanceUid={study.studyInstanceUid}
+                            seriesInstanceUid={s.seriesInstanceUid}
+                            wadoRoot={wadoRoot}
+                            readAuthHeaders={readAuthHeaders}
+                            modality={s.modality}
+                          />
+                        </td>
+                      ) : null}
+                      <td className="bg-inherit px-3 py-2 font-mono text-xs text-slate-900">
                         {displayOrDash(s.seriesNumber)}
                       </td>
-                      <td className="px-3 py-2">{displayOrDash(s.description)}</td>
-                      <td className="px-3 py-2">
-                        <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-semibold text-white">
+                      <td className="bg-inherit px-3 py-2 text-slate-900">
+                        {displaySeriesDescription(s.description)}
+                      </td>
+                      <td className="bg-inherit px-3 py-2 text-slate-900">
+                        <span className="rounded-md border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800">
                           {displayOrDash(s.modality)}
                         </span>
                       </td>
-                      <td className="px-3 py-2 font-mono text-xs">
+                      <td className="bg-inherit px-3 py-2 font-mono text-xs text-slate-900">
                         {displayOrDash(s.numSeriesInstances)}
                       </td>
+                      {orthancServerActionsEnabled ? (
+                        <td className="bg-inherit px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            title="حذف هذه السلسلة من الخادم"
+                            aria-label="حذف السلسلة"
+                            disabled={seriesDeleteLoading || !s.seriesInstanceUid?.trim()}
+                            onClick={() => setSeriesDeleteTarget(s)}
+                            className="inline-flex items-center justify-center rounded-md border border-red-200 bg-red-50 p-1.5 text-red-700 transition hover:border-red-400 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <IconTrash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      ) : null}
                     </tr>
                   ))
                 )}
@@ -767,6 +832,90 @@ export default function CaseStudyExpandedPanel({
           </div>
         </div>
       </div>
+
+      <CtrConfirmAlertDialog
+        open={Boolean(seriesDeleteTarget)}
+        onOpenChange={open => {
+          if (seriesDeleteLoading) {
+            return;
+          }
+          if (!open) {
+            setSeriesDeleteTarget(null);
+          }
+        }}
+        title="حذف ملف / سلسلة من الدراسة"
+        description={
+          <span dir="rtl">
+            سيتم حذف هذه السلسلة وصورها فقط — وليس حذف الحالة من القائمة. حذف الدراسة بالكامل من
+            زر «حذف Orthanc» في الأعلى.
+            <br />
+            <span className="mt-1 block font-medium text-slate-800">
+              {displayOrDash(seriesDeleteTarget?.modality)} — رقم{' '}
+              {displayOrDash(seriesDeleteTarget?.seriesNumber)} —{' '}
+              {displayOrDash(seriesDeleteTarget?.description)}
+            </span>
+          </span>
+        }
+        variant="danger"
+        confirmLabel="حذف الملف"
+        cancelLabel="تراجع"
+        loading={seriesDeleteLoading}
+        onConfirm={async () => {
+          const target = seriesDeleteTarget;
+          const seriesUid = target?.seriesInstanceUid?.trim();
+          if (!seriesUid || !orthancRestRoot) {
+            setSeriesDeleteTarget(null);
+            return;
+          }
+          setSeriesDeleteLoading(true);
+          try {
+            const auth = readAuthHeaders();
+            const { wasLastSeriesInStudy } = await orthancDeleteSeriesBySeriesInstanceUid(
+              orthancRestRoot,
+              seriesUid,
+              auth,
+              undefined,
+              {
+                studyInstanceUid: study.studyInstanceUid,
+                studyAnchorContext: {
+                  studyInstanceUid: study.studyInstanceUid,
+                  patientId: study.mrn,
+                  patientName: study.patientName,
+                  accessionNumber: study.accession,
+                  studyDescription: study.description,
+                  studyDate: study.date,
+                  studyTime: study.time,
+                },
+              }
+            );
+            const ds = dataSource as {
+              deleteStudyMetadataPromise?: (studyInstanceUID: string) => void;
+            };
+            ds.deleteStudyMetadataPromise?.(study.studyInstanceUid);
+            servicesManager.services.uiNotificationService?.show({
+              title: 'تم الحذف',
+              message: wasLastSeriesInStudy
+                ? 'تم حذف الملف. الحالة ما زالت في القائمة — يمكنك رفع ملفات جديدة لنفس الدراسة.'
+                : 'تم حذف السلسلة/الملف. بقية الدراسة لم تُمس.',
+              type: 'success',
+              duration: 5000,
+            });
+            setSeriesDeleteTarget(null);
+            setSeriesRefreshKey(k => k + 1);
+            onAfterStudyMutation?.();
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            servicesManager.services.uiNotificationService?.show({
+              title: 'فشل الحذف',
+              message: msg,
+              type: 'error',
+              duration: 8000,
+            });
+          } finally {
+            setSeriesDeleteLoading(false);
+          }
+        }}
+      />
 
       {/* الديالوج التأكيدي لحذف الدراسة */}
       <CtrConfirmAlertDialog

@@ -49,6 +49,65 @@ export function generateDicomUid(): string {
   return `2.25.${Date.now()}.${random}`;
 }
 
+/** SeriesDescription tag for an internal placeholder that keeps the case row after the last file is removed. */
+export const VIGIL_STUDY_ANCHOR_SERIES_DESCRIPTION = 'VigilHub-Study-Anchor';
+
+/**
+ * Minimal Secondary Capture so Orthanc keeps the study (same StudyInstanceUID) with no clinical series left.
+ * Removed automatically when the user uploads new DICOM to this study.
+ */
+export function buildStudyAnchorDicomBuffer(context: StudyUploadContext): ArrayBuffer {
+  const sopInstanceUid = generateDicomUid();
+  const seriesInstanceUid = generateDicomUid();
+  const now = new Date();
+  const studyDate =
+    context.studyDate?.trim() || now.toISOString().slice(0, 10).replace(/-/g, '');
+  const studyTime =
+    context.studyTime?.trim() ||
+    now.toTimeString().slice(0, 8).replace(/:/g, '');
+
+  const rows = 8;
+  const columns = 8;
+
+  const dataset: Record<string, unknown> = {
+    SOPClassUID: '1.2.840.10008.5.1.4.1.1.7',
+    SOPInstanceUID: sopInstanceUid,
+    StudyInstanceUID: context.studyInstanceUid,
+    SeriesInstanceUID: seriesInstanceUid,
+    SeriesDescription: VIGIL_STUDY_ANCHOR_SERIES_DESCRIPTION,
+    Modality: 'SC',
+    PatientID: context.patientId || 'VIGIL',
+    PatientName: context.patientName || 'VIGIL',
+    AccessionNumber: context.accessionNumber,
+    StudyDescription: context.studyDescription,
+    StudyDate: studyDate,
+    StudyTime: studyTime,
+    SeriesNumber: '9999',
+    InstanceNumber: '1',
+    Rows: rows,
+    Columns: columns,
+    BitsAllocated: 8,
+    BitsStored: 8,
+    HighBit: 7,
+    PixelRepresentation: 0,
+    SamplesPerPixel: 1,
+    PhotometricInterpretation: 'MONOCHROME2',
+    PixelData: new Uint8Array(rows * columns),
+  };
+
+  const meta = {
+    MediaStorageSOPClassUID: dataset.SOPClassUID,
+    MediaStorageSOPInstanceUID: sopInstanceUid,
+    TransferSyntaxUID: EXPLICIT_VR_LITTLE_ENDIAN,
+    ImplementationClassUID,
+    ImplementationVersionName,
+  };
+
+  const dicomDict = new DicomDict(denaturalizeDataset(meta));
+  dicomDict.dict = denaturalizeDataset(dataset);
+  return toArrayBuffer(dicomDict.write());
+}
+
 function setTag(dataset: Record<string, unknown>, tag: string, value?: string) {
   if (value === undefined || value === null) {
     return;

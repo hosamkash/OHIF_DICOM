@@ -549,6 +549,22 @@ function PageCasesTableWorkList({
               border-color: transparent !important;
               box-shadow: none !important;
             }
+            .cases-page-scope .case-study-series-table table,
+            .cases-page-scope .case-study-series-table tbody,
+            .cases-page-scope .case-study-series-table tr,
+            .cases-page-scope .case-study-series-table td {
+              background-color: #ffffff !important;
+              color: #0b1120 !important;
+            }
+            .cases-page-scope .case-study-series-table thead,
+            .cases-page-scope .case-study-series-table thead tr,
+            .cases-page-scope .case-study-series-table th {
+              background-color: #f8fafc !important;
+              color: #0b1120 !important;
+            }
+            .cases-page-scope .case-study-series-table tbody tr:nth-child(odd) td {
+              background-color: #f8fafc !important;
+            }
           `}
         </style>
 

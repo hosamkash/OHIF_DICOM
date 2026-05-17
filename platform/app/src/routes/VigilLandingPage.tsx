@@ -29,12 +29,12 @@ function VigilLandingPage() {
   return (
     <div
       data-vigil-landing
-      className="relative h-full min-h-0 overflow-auto bg-slate-800 text-slate-100"
+      className="relative h-full min-h-0 overflow-auto bg-slate-700 text-slate-100"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(45,212,191,0.17),transparent_38%),radial-gradient(circle_at_80%_12%,rgba(196,181,253,0.19),transparent_32%),radial-gradient(circle_at_50%_85%,rgba(96,165,250,0.15),transparent_35%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(45,212,191,0.22),transparent_38%),radial-gradient(circle_at_80%_12%,rgba(196,181,253,0.24),transparent_32%),radial-gradient(circle_at_50%_85%,rgba(96,165,250,0.2),transparent_35%)]" />
 
       <main className="relative mx-auto grid min-h-full w-full max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[330px_1fr] lg:px-10">
-        <aside className="border-teal-100/18 bg-slate-800/70 shadow-black/35 rounded-3xl border p-6 shadow-2xl backdrop-blur">
+        <aside className="border-teal-100/22 bg-slate-700/70 shadow-black/25 rounded-3xl border p-6 shadow-2xl backdrop-blur">
           <p className="vigil-aside-brand text-center text-lg font-bold uppercase tracking-[0.2em]">
             Vigil Hub
           </p>
@@ -63,21 +63,21 @@ function VigilLandingPage() {
             </p>
             <a
               href="tel:01004232647"
-              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/10 bg-slate-700/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
+              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/14 bg-slate-600/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
             >
               <span>📞</span>
               <span>01004232647</span>
             </a>
             <a
               href="tel:01200216126"
-              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/10 bg-slate-700/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
+              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/14 bg-slate-600/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
             >
               <span>📱</span>
               <span>01200216126</span>
             </a>
             <a
               href="mailto:info@vigilhub.app"
-              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/10 bg-slate-700/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
+              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/14 bg-slate-600/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
             >
               <span>✉️</span>
               <span>info@vigilhub.app</span>
@@ -86,7 +86,7 @@ function VigilLandingPage() {
               href="https://vigilhub.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/10 bg-slate-700/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
+              className="vigil-contact-card flex items-center gap-3 rounded-xl border border-white/14 bg-slate-600/70 px-4 py-3 text-sm transition hover:border-teal-200/40"
             >
               <span>🌐</span>
               <span>https://vigilhub.app</span>
@@ -95,7 +95,7 @@ function VigilLandingPage() {
         </aside>
 
         <section className="flex flex-col gap-6">
-          <div className="from-violet-400/16 shadow-cyan-900/40 rounded-3xl border border-violet-200/22 bg-gradient-to-b via-cyan-300/11 to-transparent p-7 shadow-2xl sm:p-10">
+          <div className="from-violet-400/20 shadow-cyan-900/30 rounded-3xl border border-violet-200/28 bg-gradient-to-b via-cyan-300/16 to-transparent p-7 shadow-2xl sm:p-10">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/40 bg-cyan-200/10 px-4 py-1 uppercase">
                 <span className="vigil-badge-soft text-[10px] font-semibold tracking-[0.18em]">
@@ -141,15 +141,15 @@ function VigilLandingPage() {
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="bg-slate-800/55 rounded-2xl border border-white/10 px-4 py-4">
+              <div className="bg-slate-700/55 rounded-2xl border border-white/14 px-4 py-4">
                 <p className="vigil-card-muted text-xs">Specialized</p>
                 <p className="vigil-card-title mt-1 text-sm font-semibold">Radiology Ready</p>
               </div>
-              <div className="bg-slate-800/55 rounded-2xl border border-white/10 px-4 py-4">
+              <div className="bg-slate-700/55 rounded-2xl border border-white/14 px-4 py-4">
                 <p className="vigil-card-muted text-xs">DICOM First</p>
                 <p className="vigil-card-title mt-1 text-sm font-semibold">Workflow Focused</p>
               </div>
-              <div className="bg-slate-800/55 rounded-2xl border border-white/10 px-4 py-4">
+              <div className="bg-slate-700/55 rounded-2xl border border-white/14 px-4 py-4">
                 <p className="vigil-card-muted text-xs">Enterprise</p>
                 <p className="vigil-card-title mt-1 text-sm font-semibold">Scalable Integration</p>
               </div>
@@ -157,7 +157,7 @@ function VigilLandingPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <article className="rounded-3xl border border-white/10 bg-slate-700/60 p-7">
+            <article className="rounded-3xl border border-white/14 bg-slate-600/60 p-7">
               <h2 className="text-xl font-semibold text-white">رسالة المنصة</h2>
               <ul className="mt-4 space-y-4 text-sm leading-8">
                 <li>
@@ -180,7 +180,7 @@ function VigilLandingPage() {
               </ul>
             </article>
 
-            <article className="rounded-3xl border border-white/10 bg-slate-700/60 p-7">
+            <article className="rounded-3xl border border-white/14 bg-slate-600/60 p-7">
               <h2 className="text-xl font-semibold text-white">الخطوة التالية</h2>
               <p className="vigil-body-soft mt-4 text-sm leading-8">
                 انتقل الآن إلى واجهة المشاهدة لبدء تجربة OHIF Viewer ضمن بيئة جاهزة للعرض والتطوير.

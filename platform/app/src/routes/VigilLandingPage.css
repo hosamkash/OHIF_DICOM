@@ -1,16 +1,16 @@
 /*
  * Landing page: explicit colors so OHIF global theme / missing Tailwind utilities
  * do not force dark text on a dark background.
- * Palette is ~2 Tailwind steps lighter than the original Vigil landing theme.
+ * Palette: one step lighter than original slate-800 (base slate-700).
  */
 [data-vigil-landing] {
-  background-color: #1e293b !important;
-  color: rgb(241, 245, 249) !important;
+  background-color: #334155 !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 [data-vigil-landing] p,
 [data-vigil-landing] li {
-  color: rgb(241, 245, 249) !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 [data-vigil-landing] h1,
@@ -20,17 +20,17 @@
 
 [data-vigil-landing] .vigil-grad {
   color: transparent !important;
-  background-image: linear-gradient(to left, #ccfbf1, #ede9fe);
+  background-image: linear-gradient(to left, #f0fdfa, #f5f3ff);
   -webkit-background-clip: text;
   background-clip: text;
 }
 
 [data-vigil-landing] .vigil-aside-brand {
-  color: #99f6e4 !important;
+  color: #ccfbf1 !important;
 }
 
 [data-vigil-landing] .vigil-intro-muted {
-  color: rgb(226, 232, 240) !important;
+  color: rgb(241, 245, 249) !important;
 }
 
 [data-vigil-landing] .vigil-text-white {
@@ -38,40 +38,40 @@
 }
 
 [data-vigil-landing] .vigil-text-cyan {
-  color: #ccfbf1 !important;
+  color: #f0fdfa !important;
 }
 
 [data-vigil-landing] .vigil-contact-label {
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
 }
 
 [data-vigil-landing] a.vigil-contact-card {
-  color: rgb(241, 245, 249) !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 [data-vigil-landing] a.vigil-contact-card:hover {
-  color: #f8fafc !important;
+  color: #ffffff !important;
 }
 
 [data-vigil-landing] a.vigil-cta {
-  color: #ccfbf1 !important;
+  color: #f0fdfa !important;
 }
 
 [data-vigil-landing] a.vigil-cta svg {
-  color: #ccfbf1 !important;
-  stroke: #ccfbf1 !important;
+  color: #f0fdfa !important;
+  stroke: #f0fdfa !important;
 }
 
 [data-vigil-landing] .vigil-badge-soft {
-  color: rgba(224, 252, 245, 0.92) !important;
+  color: rgba(240, 253, 250, 0.95) !important;
 }
 
 [data-vigil-landing] .vigil-badge-strong {
-  color: #e0f2fe !important;
+  color: #f0f9ff !important;
 }
 
 [data-vigil-landing] .vigil-card-muted {
-  color: #cbd5e1 !important;
+  color: #e2e8f0 !important;
 }
 
 [data-vigil-landing] .vigil-card-title {
@@ -79,21 +79,21 @@
 }
 
 [data-vigil-landing] .vigil-li-marker {
-  color: #99f6e4 !important;
+  color: #ccfbf1 !important;
 }
 
 [data-vigil-landing] .vigil-strong-muted {
-  color: rgb(241, 245, 249) !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 [data-vigil-landing] .vigil-rose {
-  color: #fecdd3 !important;
+  color: #ffe4e6 !important;
 }
 
 [data-vigil-landing] .vigil-violet {
-  color: #ede9fe !important;
+  color: #f5f3ff !important;
 }
 
 [data-vigil-landing] .vigil-body-soft {
-  color: rgb(226, 232, 240) !important;
+  color: rgb(241, 245, 249) !important;
 }
