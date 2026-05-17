@@ -1,6 +1,15 @@
 {
-  "buildCommand": "yarn build",
+  "buildCommand": "yarn build:vigil:cloud",
   "installCommand": "yarn install",
   "outputDirectory": "platform/app/dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/pacs/:path*",
+      "destination": "http://35.242.134.20:8042/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
