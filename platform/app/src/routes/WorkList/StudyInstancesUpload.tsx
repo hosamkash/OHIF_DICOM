@@ -3,9 +3,9 @@ import Dropzone from 'react-dropzone';
 import dicomImageLoader from '@cornerstonejs/dicom-image-loader';
 import { Button } from '@ohif/ui-next';
 import {
-  orthancClearStudyInstances,
-  orthancFindStudyId,
+  orthancDeleteVigilStudyAnchorSeries,
   orthancGetStudyMainTags,
+  orthancResolveStudyId,
   orthancUploadInstanceToStudy,
 } from '../../lib/orthanc-study-labels';
 import {
@@ -18,6 +18,7 @@ import {
 type StudyInstancesUploadProps = {
   studyContext: StudyUploadContext;
   orthancRestRoot: string;
+  wadoRoot?: string | null;
   readAuthHeaders: () => Record<string, string>;
   onComplete: () => void;
   onStarted?: () => void;
@@ -46,6 +47,7 @@ async function readDicomBuffer(file: File): Promise<ArrayBuffer> {
 export default function StudyInstancesUpload({
   studyContext,
   orthancRestRoot,
+  wadoRoot,
   readAuthHeaders,
   onComplete,
   onStarted,
@@ -76,25 +78,34 @@ export default function StudyInstancesUpload({
 
       try {
         const auth = readAuthHeaders();
-        const orthancStudyId = await orthancFindStudyId(
+        const targetStudyUid = studyInstanceUid.trim();
+        let orthancStudyId = await orthancResolveStudyId(
           orthancRestRoot,
-          studyInstanceUid,
+          targetStudyUid,
           auth,
-          ac.signal
+          ac.signal,
+          { wadoRoot: wadoRoot?.trim() || undefined }
         );
-        if (!orthancStudyId) {
-          throw new Error('لا يوجد سجل Orthanc لهذه الدراسة. استخدم «إضافة جديد» لإنشاء دراسة.');
+
+        let resolvedContext: StudyUploadContext;
+        if (orthancStudyId) {
+          const orthancMain = await orthancGetStudyMainTags(
+            orthancRestRoot,
+            orthancStudyId,
+            auth,
+            ac.signal
+          );
+          resolvedContext = mergeStudyUploadContext(orthancMain, studyContext);
+        } else {
+          resolvedContext = mergeStudyUploadContext({}, studyContext);
         }
 
-        const orthancMain = await orthancGetStudyMainTags(
+        await orthancDeleteVigilStudyAnchorSeries(
           orthancRestRoot,
-          orthancStudyId,
+          resolvedContext.studyInstanceUid || targetStudyUid,
           auth,
           ac.signal
         );
-        const resolvedContext = mergeStudyUploadContext(orthancMain, studyContext);
-
-        await orthancClearStudyInstances(orthancRestRoot, orthancStudyId, auth, ac.signal);
 
         const batchSeriesUid = generateDicomUid();
         const uploadContext: StudyUploadContext = {
@@ -116,7 +127,7 @@ export default function StudyInstancesUpload({
               throw new Error('ليس ملف DICOM صالحاً.');
             }
             const buffer = remapDicomBufferToStudy(raw, uploadContext);
-            await orthancUploadInstanceToStudy(orthancRestRoot, orthancStudyId, buffer, auth, {
+            await orthancUploadInstanceToStudy(orthancRestRoot, orthancStudyId ?? '', buffer, auth, {
               expectedStudyInstanceUid: uploadContext.studyInstanceUid,
               signal: ac.signal,
               onProgress: percent => updateItem(i, { percent }),
@@ -156,6 +167,7 @@ export default function StudyInstancesUpload({
       studyContext,
       studyInstanceUid,
       updateItem,
+      wadoRoot,
     ]
   );
 
@@ -179,7 +191,8 @@ export default function StudyInstancesUpload({
         dir="rtl"
       >
         <p className="text-sm text-slate-600">
-          استبدال صور الدراسة بملفات DICOM المرفوعة ({studyInstanceUid.slice(0, 24)}…)
+          إضافة ملفات DICOM إلى الدراسة الحالية ({studyInstanceUid.slice(0, 24)}…) — تبقى الصور
+          السابقة كما هي
         </p>
         <ul className="min-h-0 flex-1 space-y-2 overflow-y-auto">
           {items.map((row, idx) => (
@@ -246,7 +259,7 @@ export default function StudyInstancesUpload({
             className="flex w-full flex-col items-center justify-center gap-3 p-6"
           >
             <p className="text-center text-sm text-slate-600">
-              استبدال صور الدراسة بملفات DICOM المرفوعة (تُحذف الصور السابقة على الخادم)
+              إضافة ملفات DICOM إلى الدراسة الحالية دون حذف الصور أو السلاسل الموجودة
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Dropzone
