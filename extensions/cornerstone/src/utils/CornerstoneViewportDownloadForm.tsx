@@ -10,6 +10,11 @@ import {
   buildSecondaryCaptureDicomBlob,
   type SourceDisplaySetLike,
 } from './buildSecondaryCaptureDicomBlob';
+import {
+  captureViewportGridLayout,
+  countPopulatedLayoutViewports,
+  getViewportGridLayoutCells,
+} from './captureViewportGridLayout';
 
 const { downloadUrl, downloadDicom, downloadBlob } = utils;
 
@@ -62,6 +67,7 @@ const CornerstoneViewportDownloadForm = ({
     customizationService,
     cornerstoneViewportService,
     displaySetService,
+    viewportGridService,
     uiNotificationService,
   } = servicesManager.services;
   const [showAnnotations, setShowAnnotations] = useState(true);
@@ -112,8 +118,23 @@ const CornerstoneViewportDownloadForm = ({
 
   const captureFailureNotified = useRef(false);
 
+  const layoutViewportCount = useMemo(
+    () => (viewportGridService ? countPopulatedLayoutViewports(viewportGridService) : 0),
+    [viewportGridService, activeViewportIdProp]
+  );
+
+  const gridLayout = useMemo(() => {
+    const state = viewportGridService?.getState?.();
+    return {
+      numRows: state?.layout?.numRows ?? 1,
+      numCols: state?.layout?.numCols ?? 1,
+    };
+  }, [viewportGridService, activeViewportIdProp]);
+
+  const canExportLayout = layoutViewportCount >= 1;
+
   useEffect(() => {
-    if (captureContext !== null || !activeViewportIdProp || captureFailureNotified.current) {
+    if (captureContext !== null || canExportLayout || !activeViewportIdProp || captureFailureNotified.current) {
       return;
     }
     captureFailureNotified.current = true;
@@ -123,7 +144,7 @@ const CornerstoneViewportDownloadForm = ({
       type: 'error',
     });
     hide();
-  }, [activeViewportIdProp, captureContext, hide, uiNotificationService]);
+  }, [activeViewportIdProp, canExportLayout, captureContext, hide, uiNotificationService]);
 
   useEffect(() => {
     if (!toolGroup?.toolOptions) {
@@ -184,7 +205,7 @@ const CornerstoneViewportDownloadForm = ({
     renderingEngine.disableElement(VIEWPORT_ID);
   };
 
-  const handleLoadImage = async (width: number, height: number) => {
+  const handleLoadImage = async (width: number, height: number, imageIdOverride?: string) => {
     if (!activeViewportElement) {
       return;
     }
@@ -213,7 +234,7 @@ const CornerstoneViewportDownloadForm = ({
       const viewRef = viewport.getViewReference?.();
 
       if (downloadViewport instanceof StackViewport) {
-        const imageId = viewport.getCurrentImageId();
+        const imageId = imageIdOverride || viewport.getCurrentImageId();
         await downloadViewport.setStack([imageId]);
       } else if (downloadViewport instanceof BaseVolumeViewport) {
         const volumeIds = viewport.getAllVolumeIds();
@@ -326,17 +347,40 @@ const CornerstoneViewportDownloadForm = ({
     }, 100);
   }, [captureContext, renderingEngine, viewportDimensions, showAnnotations]);
 
+  const resolveExportCanvas = useCallback(async (): Promise<HTMLCanvasElement | null> => {
+    if (canExportLayout && viewportGridService) {
+      const cells = getViewportGridLayoutCells(viewportGridService);
+      const layoutCanvas = await captureViewportGridLayout({
+        cells,
+        hasContent: viewportId => {
+          const vp = viewportGridService.getState().viewports.get(viewportId);
+          return Boolean(vp?.displaySetInstanceUIDs?.length);
+        },
+      });
+      if (layoutCanvas) {
+        return layoutCanvas;
+      }
+    }
+
+    const div = document.querySelector(
+      `div[data-viewport-uid="${VIEWPORT_ID}"]`
+    ) as HTMLElement | null;
+
+    if (!div) {
+      console.debug('No viewport found for download');
+      return null;
+    }
+
+    return html2canvas(div);
+  }, [canExportLayout, viewportGridService]);
+
   const buildExportArtifact = useCallback(
     async (baseFilename: string, fileType: string): Promise<ExportArtifact | null> => {
-      const divForDownloadViewport = document.querySelector(
-        `div[data-viewport-uid="${VIEWPORT_ID}"]`
-      );
-      if (!divForDownloadViewport) {
-        console.debug('No viewport found for download');
+      const canvas = await resolveExportCanvas();
+      if (!canvas) {
         return null;
       }
 
-      const canvas = await html2canvas(divForDownloadViewport as HTMLElement);
       const base = baseFilename || 'image';
 
       if (fileType === 'dcm') {
@@ -351,7 +395,11 @@ const CornerstoneViewportDownloadForm = ({
         } catch (e) {
           console.warn('DICOM export: could not resolve source display set', e);
         }
-        const blob = buildSecondaryCaptureDicomBlob(canvas, { source });
+        const seriesDescription =
+          layoutViewportCount > 1
+            ? `OHIF layout ${gridLayout.numCols}x${gridLayout.numRows} (${layoutViewportCount} panes)`
+            : undefined;
+        const blob = buildSecondaryCaptureDicomBlob(canvas, { source, seriesDescription });
         return { blob, filename: `${base}.dcm`, mimeType: 'application/dicom' };
       }
 
@@ -376,7 +424,15 @@ const CornerstoneViewportDownloadForm = ({
       const blob = await res.blob();
       return { blob, filename: `${base}.${fileType}`, mimeType };
     },
-    [activeViewportIdProp, cornerstoneViewportService, displaySetService]
+    [
+      activeViewportIdProp,
+      cornerstoneViewportService,
+      displaySetService,
+      gridLayout.numCols,
+      gridLayout.numRows,
+      layoutViewportCount,
+      resolveExportCanvas,
+    ]
   );
 
   const saveArtifactToDisk = useCallback(async (artifact: ExportArtifact, fileType: string) => {
@@ -469,17 +525,12 @@ const CornerstoneViewportDownloadForm = ({
   );
 
   const handleCopyToClipboard = async () => {
-    const divForDownloadViewport = document.querySelector(
-      `div[data-viewport-uid="${VIEWPORT_ID}"]`
-    );
-
-    if (!divForDownloadViewport) {
-      console.debug('No viewport found for copy');
-      return;
-    }
-
     try {
-      const canvas = await html2canvas(divForDownloadViewport as HTMLElement);
+      const canvas = await resolveExportCanvas();
+      if (!canvas) {
+        console.debug('No viewport found for copy');
+        return;
+      }
 
       // Clipboard API only supports PNG format in most browsers
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -524,7 +575,7 @@ const CornerstoneViewportDownloadForm = ({
       .filter(Boolean) as typeof DEFAULT_FILE_TYPE_OPTIONS;
   }, [preferredFileFormats]);
 
-  if (!captureContext) {
+  if (!captureContext && !canExportLayout) {
     return null;
   }
 
@@ -545,6 +596,9 @@ const CornerstoneViewportDownloadForm = ({
       onShareLaunch={launchNativeShare}
       onCopyToClipboard={handleCopyToClipboard}
       warningState={warningState}
+      layoutViewportCount={layoutViewportCount}
+      gridNumRows={gridLayout.numRows}
+      gridNumCols={gridLayout.numCols}
     />
   );
 };

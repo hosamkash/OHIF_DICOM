@@ -27,6 +27,8 @@ window.config = {
         supportsFuzzyMatching: true,
         supportsWildcard: true,
         omitQuotationForMultipartRequest: true,
+        // Same user/password as Orthanc RegisteredUsers (e.g. 'Orthanc:your-password')
+        // requestOptions: { auth: 'Orthanc:CHANGE_ME' },
       },
     },
     {

@@ -17,6 +17,7 @@ import StaticWadoClient from './utils/StaticWadoClient';
 import getDirectURL from '../utils/getDirectURL';
 import { fixBulkDataURI } from './utils/fixBulkDataURI';
 import {HeadersInterface} from '@ohif/core/src/types/RequestHeaders';
+import coreGetAuthorizationHeader from '@ohif/core/src/DICOMWeb/getAuthorizationHeader';
 
 const { DicomMetaDictionary, DicomDict } = dcmjs.data;
 
@@ -143,12 +144,9 @@ function createDicomWebApi(dicomWebConfig: DicomWebConfig, servicesManager) {
       dicomWebConfigCopy = JSON.parse(JSON.stringify(dicomWebConfig));
 
       getAuthorizationHeader = () => {
-        const xhrRequestHeaders: HeadersInterface = {};
-        const authHeaders = userAuthenticationService.getAuthorizationHeader();
-        if (authHeaders && authHeaders.Authorization) {
-          xhrRequestHeaders.Authorization = authHeaders.Authorization;
-        }
-        return xhrRequestHeaders;
+        const fromConfig = coreGetAuthorizationHeader(dicomWebConfig as { requestOptions?: { auth?: string } });
+        const fromUser = userAuthenticationService.getAuthorizationHeader() || {};
+        return { ...fromConfig, ...fromUser };
       };
 
       /**

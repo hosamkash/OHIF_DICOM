@@ -26,5 +26,12 @@
   "Include annotations": "تضمين التعليقات",
   "Include warning message": "تضمين رسالة التحذير",
   "Image copied to clipboard": "تم نسخ الصورة إلى الحافظة",
-  "Failed to copy image to clipboard": "فشل نسخ الصورة إلى الحافظة"
+  "Failed to copy image to clipboard": "فشل نسخ الصورة إلى الحافظة",
+  "Film sheet export": "تصدير فيلم (صور السلسلة)",
+  "Film columns": "أعمدة",
+  "Film rows": "صفوف",
+  "Film sheet hint": "يستخدم حتى {{capacity}} صورة من السلسلة الحالية ({{total}} متاحة). يُصدَّر كملف DICOM/PDF/صورة واحد.",
+  "Export viewport": "تصدير العرض",
+  "Layout export single": "يُصدَّر ما يظهر في العرض الحالي (صورة واحدة).",
+  "Layout export multi": "يُصدَّر كل {{count}} صورة في التخطيط الحالي (شبكة {{cols}}×{{rows}}) كما على الشاشة."
 }

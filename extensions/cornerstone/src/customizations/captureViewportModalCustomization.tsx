@@ -67,11 +67,13 @@ interface ViewportDownloadFormNewProps {
   onEnableViewport: (element: HTMLElement) => void;
   onDisableViewport: () => void;
   onDownload: (filename: string, fileType: string) => void | Promise<void>;
-  /**
-   * Step 1: build file (may be slow — breaks transient user activation).
-   * Step 2: user taps `onShareLaunch` so `navigator.share` runs on a fresh gesture.
-   */
-  onSharePrepare?: (filename: string, fileType: string) => Promise<ShareArtifactPayload | null>;
+  layoutViewportCount?: number;
+  gridNumRows?: number;
+  gridNumCols?: number;
+  onSharePrepare?: (
+    filename: string,
+    fileType: string
+  ) => Promise<ShareArtifactPayload | null>;
   onShareLaunch?: (artifact: ShareArtifactPayload, fileType: string) => Promise<'file' | 'text' | false>;
   onCopyToClipboard: () => void;
   warningState: { enabled: boolean; value: string };
@@ -93,6 +95,9 @@ function ViewportDownloadFormNew({
   onSharePrepare,
   onShareLaunch,
   onCopyToClipboard,
+  layoutViewportCount = 0,
+  gridNumRows = 1,
+  gridNumCols = 1,
 }: ViewportDownloadFormNewProps) {
   const [viewportElement, setViewportElement] = useState<HTMLElement | null>(null);
   const [showWarningMessage, setShowWarningMessage] = useState(true);
@@ -162,11 +167,8 @@ function ViewportDownloadFormNew({
     setShareLaunchBusy(true);
     try {
       const result = await onShareLaunch(shareArtifact, fileType);
-      if (result === 'file') {
+      if (result) {
         toast.success(t('Share completed', { defaultValue: 'Share opened' }));
-        onClose();
-      } else if (result === 'text') {
-        toast.success(t('Share text sheet opened'));
         onClose();
       }
     } catch (error) {
@@ -204,6 +206,20 @@ function ViewportDownloadFormNew({
         </ImageModal.ImageVisual>
 
         <ImageModal.ImageOptions>
+          <p className="text-primary bg-primary/10 rounded-md px-2 py-1.5 text-xs font-medium">
+            {layoutViewportCount <= 1
+              ? t('Layout export single', {
+                  defaultValue: 'Exports the image currently shown in the viewer layout.',
+                })
+              : t('Layout export multi', {
+                  defaultValue:
+                    'Exports all {{count}} images in the current layout ({{cols}}×{{rows}} grid), exactly as on screen.',
+                  count: layoutViewportCount,
+                  cols: gridNumCols,
+                  rows: gridNumRows,
+                })}
+          </p>
+
           <div className="flex items-end space-x-2">
             <ImageModal.Filename
               value={filename}
@@ -251,6 +267,7 @@ function ViewportDownloadFormNew({
           >
             {t('Include annotations')}
           </ImageModal.SwitchOption>
+
           {warningState.enabled && (
             <ImageModal.SwitchOption
               defaultChecked={showWarningMessage}
@@ -337,3 +354,4 @@ function ViewportDownloadFormNew({
 export default {
   'ohif.captureViewportModal': ViewportDownloadFormNew,
 };
+
