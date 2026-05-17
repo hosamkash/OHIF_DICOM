@@ -94,6 +94,7 @@ function modeFactory({ modeConfiguration }) {
         'Zoom',
         'Pan',
         'WindowLevel',
+        'PdfExport',
         'Crosshairs',
       ]);
 

@@ -48,7 +48,12 @@ function modeFactory({ modeConfiguration }) {
       const { toolbarService } = servicesManager.services;
 
       toolbarService.register(toolbarButtons);
-      toolbarService.updateSection('primary', ['MeasurementTools', 'dragPan', 'TagBrowser']);
+      toolbarService.updateSection('primary', [
+        'MeasurementTools',
+        'dragPan',
+        'PdfExport',
+        'TagBrowser',
+      ]);
 
       toolbarService.updateSection('MeasurementTools', [
         'line',

@@ -48,6 +48,7 @@ import calculateScanAxisNormal from './calculateScanAxisNormal';
 import areAllImageOrientationsEqual from './areAllImageOrientationsEqual';
 import { structuredCloneWithFunctions } from './structuredCloneWithFunctions';
 import { buildButtonCommands } from './buildButtonCommands';
+import { pdfExportToolbarButton, PDF_EXPORT_TOOLBAR_BUTTON_ID } from './pdfExportToolbarButton';
 
 import { downloadBlob, downloadUrl, downloadCsv, downloadDicom } from './downloadBlob';
 
@@ -107,6 +108,8 @@ const utils = {
   downloadUrl,
   downloadCsv,
   downloadDicom,
+  pdfExportToolbarButton,
+  PDF_EXPORT_TOOLBAR_BUTTON_ID,
 };
 
 export {
@@ -149,6 +152,8 @@ export {
   downloadUrl,
   downloadCsv,
   downloadDicom,
+  pdfExportToolbarButton,
+  PDF_EXPORT_TOOLBAR_BUTTON_ID,
 };
 
 export default utils;

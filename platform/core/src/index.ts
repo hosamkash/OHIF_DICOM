@@ -146,5 +146,6 @@ export { OHIF };
 
 export type { Types };
 export type { SortDisplaySetsCopyOptions } from './utils/sortStudy';
+export { pdfExportToolbarButton, PDF_EXPORT_TOOLBAR_BUTTON_ID } from './utils/pdfExportToolbarButton';
 
 export default OHIF;

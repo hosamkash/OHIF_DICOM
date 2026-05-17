@@ -219,6 +219,7 @@ export const toolbarSections = {
     'Zoom',
     'Pan',
     'TrackballRotate',
+    'PdfExport',
     'WindowLevel',
     'Capture',
     'Layout',

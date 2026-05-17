@@ -100,6 +100,7 @@ function modeFactory({ modeConfiguration }) {
         'Zoom',
         'WindowLevel',
         'Pan',
+        'PdfExport',
         'Layout',
         'MoreTools',
       ]);

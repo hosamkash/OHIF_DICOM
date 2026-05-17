@@ -391,13 +391,25 @@ function PageCasesTableWorkList({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden bg-white text-[#0b1120]">
-      <Header
-        isSticky
-        menuOptions={[]}
-        isReturnEnabled={false}
-        onClickBrand={() => navigate({ pathname: APP_MARKETING_LANDING_PATH })}
-        WhiteLabeling={appConfig.whiteLabeling}
-      />
+      <div className="vigil-ohif-topbar-lighten">
+        <style>
+          {`
+            .vigil-ohif-topbar-lighten {
+              --popover: 222 42% 23%;
+              --muted: 222 35% 26%;
+              --card: 222 42% 23%;
+              --border: 214 18% 32%;
+            }
+          `}
+        </style>
+        <Header
+          isSticky
+          menuOptions={[]}
+          isReturnEnabled={false}
+          onClickBrand={() => navigate({ pathname: APP_MARKETING_LANDING_PATH })}
+          WhiteLabeling={appConfig.whiteLabeling}
+        />
+      </div>
       <Onboarding />
 
       {/* الديالوج التأكيدي للاستخدام البحثي */}

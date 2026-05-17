@@ -7,13 +7,13 @@ import {
   authorizationHeaderFromUserAuth,
   buildOrthancExplorerFilteredStudiesUrl,
   getOrthancRestRootFromDataSource,
-  orthancAnonymizeStudy,
   orthancDeleteStudy,
   orthancDeleteStudyLabel,
   orthancFindStudyId,
   orthancGetStudyLabels,
   orthancPutStudyLabel,
 } from '../../lib/orthanc-study-labels';
+import StudyInstancesUpload from './StudyInstancesUpload';
 
 const IconEye = getLucideIcon('Eye');
 const IconLayoutGrid = getLucideIcon('LayoutGrid');
@@ -21,10 +21,7 @@ const IconLayers = getLucideIcon('Layers');
 const IconBox = getLucideIcon('Box');
 const IconActivity = getLucideIcon('Activity');
 const IconWaves = getLucideIcon('Waves');
-const IconDownload = getLucideIcon('Download');
 const IconTrash2 = getLucideIcon('Trash2');
-const IconPencil = getLucideIcon('Pencil');
-const IconUserX = getLucideIcon('UserX');
 const IconFilePlus = getLucideIcon('FilePlus');
 const IconExternalLink = getLucideIcon('ExternalLink');
 const IconCopy = getLucideIcon('Copy');
@@ -89,23 +86,6 @@ function displayOrDash(value: unknown) {
   }
   const s = String(value).trim();
   return s.length ? s : '—';
-}
-
-function useStudyArchiveUrl(studyUid: string, dataSource: unknown): string | null {
-  return useMemo(() => {
-    try {
-      const ds = dataSource as { getConfig?: () => { wadoRoot?: string; qidoRoot?: string } };
-      const cfg = ds?.getConfig?.();
-      const root = cfg?.wadoRoot || cfg?.qidoRoot;
-      if (!root || !studyUid) {
-        return null;
-      }
-      const base = String(root).replace(/\/$/, '');
-      return `${base}/studies/${studyUid}/archive`;
-    } catch {
-      return null;
-    }
-  }, [dataSource, studyUid]);
 }
 
 function CopyValueButton({
@@ -262,10 +242,6 @@ export default function CaseStudyExpandedPanel({
   const [otherLoading, setOtherLoading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [anonymizeOpen, setAnonymizeOpen] = useState(false);
-  const [anonymizeLoading, setAnonymizeLoading] = useState(false);
-
-  const archiveUrl = useStudyArchiveUrl(study.studyInstanceUid, dataSource);
 
   useEffect(() => {
     const ds = dataSource as {
@@ -479,54 +455,41 @@ export default function CaseStudyExpandedPanel({
     );
   }, [openOrthancUi, orthancRestRoot, orthancUiBaseUrl, study.studyInstanceUid]);
 
-  const openEditInOrthanc = useCallback(() => {
-    if (!study.studyInstanceUid) {
-      return;
-    }
-    window.open(
-      filteredStudiesExplorerHref(study.studyInstanceUid, orthancRestRoot, orthancUiBaseUrl, true),
-      '_blank',
-      'noopener,noreferrer'
-    );
-  }, [orthancRestRoot, orthancUiBaseUrl, study.studyInstanceUid]);
-
-  const openUploadFromTile = useCallback(() => {
-    const { customizationService } = servicesManager.services;
-    const DicomUploadComponent = customizationService.getCustomization(
-      'dicomUploadComponent'
-    ) as React.ComponentType<{
-      dataSource?: unknown;
-      onComplete?: () => void;
-      onStarted?: () => void;
-    }> | null;
-    const ds = dataSource as { getConfig?: () => { dicomUploadEnabled?: boolean } };
-    if (!DicomUploadComponent || !ds?.getConfig?.()?.dicomUploadEnabled) {
+  const openUploadToCurrentStudy = useCallback(() => {
+    if (!orthancRestRoot || !study.studyInstanceUid) {
       show({
-        title: 'رفع DICOM',
+        title: 'رفع إلى الدراسة',
         containerClassName: 'max-w-md',
         content: () => (
           <div
             className="p-4 text-sm text-slate-700"
             dir="rtl"
           >
-            تفعيل رفع DICOM من إعداد مصدر البيانات (
-            <code className="rounded bg-slate-100 px-1">dicomUploadEnabled</code>).
+            لا يوجد مسار Orthanc REST لهذه الدراسة. تأكد من إعداد مصدر البيانات.
           </div>
         ),
       });
       return;
     }
-    const containerClassName = (DicomUploadComponent as { containerClassName?: string })
-      ?.containerClassName;
     const uploadProps = {
-      title: 'رفع DICOM',
-      containerClassName,
+      title: 'رفع DICOM إلى الدراسة الحالية',
+      containerClassName: 'max-w-3xl',
       closeButton: true,
       shouldCloseOnEsc: false,
       shouldCloseOnOverlayClick: false,
       content: () => (
-        <DicomUploadComponent
-          dataSource={dataSource}
+        <StudyInstancesUpload
+          studyContext={{
+            studyInstanceUid: study.studyInstanceUid,
+            patientId: study.mrn,
+            patientName: study.patientName,
+            accessionNumber: study.accession,
+            studyDescription: study.description,
+            studyDate: study.date,
+            studyTime: study.time,
+          }}
+          orthancRestRoot={orthancRestRoot}
+          readAuthHeaders={readAuthHeaders}
           onComplete={() => {
             hide();
             onAfterStudyMutation?.();
@@ -541,14 +504,20 @@ export default function CaseStudyExpandedPanel({
       ),
     };
     show(uploadProps as never);
-  }, [dataSource, hide, onAfterStudyMutation, servicesManager, show]);
-
-  const openDownload = useCallback(() => {
-    if (!archiveUrl) {
-      return;
-    }
-    window.open(archiveUrl, '_blank', 'noopener,noreferrer');
-  }, [archiveUrl]);
+  }, [
+    hide,
+    onAfterStudyMutation,
+    orthancRestRoot,
+    readAuthHeaders,
+    show,
+    study.accession,
+    study.date,
+    study.description,
+    study.mrn,
+    study.patientName,
+    study.studyInstanceUid,
+    study.time,
+  ]);
 
   const orthancServerActionsEnabled = Boolean(orthancRestRoot && study.studyInstanceUid);
 
@@ -661,14 +630,6 @@ export default function CaseStudyExpandedPanel({
                   onClick={() => onOpenPreferMode(PREFER_MODE_KEYWORDS_US_PLEURA)}
                 />
                 <ActionTile
-                  icon={IconDownload}
-                  title="تنزيل"
-                  subtitle="DICOM ZIP"
-                  onClick={openDownload}
-                  disabled={!archiveUrl}
-                  variant={archiveUrl ? 'default' : 'muted'}
-                />
-                <ActionTile
                   icon={IconExternalLink}
                   title="Orthanc UI"
                   subtitle="8042"
@@ -683,24 +644,11 @@ export default function CaseStudyExpandedPanel({
                   disabled={!orthancServerActionsEnabled}
                 />
                 <ActionTile
-                  icon={IconPencil}
-                  title="تعديل"
-                  subtitle="DICOM"
-                  onClick={openEditInOrthanc}
-                  disabled={!study.studyInstanceUid}
-                />
-                <ActionTile
-                  icon={IconUserX}
-                  title="إخفاء هوية"
-                  subtitle="Orthanc"
-                  onClick={() => setAnonymizeOpen(true)}
-                  disabled={!orthancServerActionsEnabled}
-                />
-                <ActionTile
                   icon={IconFilePlus}
                   title="رفع"
-                  subtitle="Orthanc"
-                  onClick={openUploadFromTile}
+                  subtitle="إلى هذه الدراسة"
+                  onClick={openUploadToCurrentStudy}
+                  disabled={!orthancServerActionsEnabled}
                 />
               </div>
             </div>
@@ -882,73 +830,6 @@ export default function CaseStudyExpandedPanel({
             });
           } finally {
             setDeleteLoading(false);
-          }
-        }}
-      />
-
-      {/* الديالوج التأكيدي لإخفاء هوية الدراسة */}
-      <CtrConfirmAlertDialog
-        open={anonymizeOpen}
-        onOpenChange={open => {
-          if (anonymizeLoading) {
-            return;
-          }
-          setAnonymizeOpen(open);
-        }}
-        title="إخفاء هوية الدراسة"
-        description={
-          <span dir="rtl">
-            سيطبّق الخادم قواعد الإخفاء الافتراضية على نسخة من الدراسة (حسب إعداد Orthanc). قد تبقى
-            النسخة الأصلية أو يُستبدل السلوك حسب سياسة الخادم.
-            <br />
-            <span className="mt-1 block font-medium text-slate-800">
-              UID: {study.studyInstanceUid}
-            </span>
-          </span>
-        }
-        variant="warning"
-        confirmLabel="تنفيذ الإخفاء"
-        cancelLabel="تراجع"
-        loading={anonymizeLoading}
-        onConfirm={async () => {
-          if (!study.studyInstanceUid || !orthancRestRoot) {
-            setAnonymizeOpen(false);
-            return;
-          }
-          setAnonymizeLoading(true);
-          try {
-            const auth = readAuthHeaders();
-            const oid =
-              orthancStudyIdRef.current ||
-              (await orthancFindStudyId(orthancRestRoot, study.studyInstanceUid, auth));
-            if (!oid) {
-              servicesManager.services.uiNotificationService?.show({
-                title: 'تعذر الإخفاء',
-                message: 'لم يُعثر على الدراسة على الخادم.',
-                type: 'error',
-                duration: 6000,
-              });
-              return;
-            }
-            await orthancAnonymizeStudy(orthancRestRoot, oid, auth, {});
-            servicesManager.services.uiNotificationService?.show({
-              title: 'تم طلب الإخفاء',
-              message: 'اكتملت عملية الإخفاء على الخادم. حدّث القائمة إن لزم.',
-              type: 'success',
-              duration: 6000,
-            });
-            setAnonymizeOpen(false);
-            onAfterStudyMutation?.();
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            servicesManager.services.uiNotificationService?.show({
-              title: 'فشل الإخفاء',
-              message: msg,
-              type: 'error',
-              duration: 8000,
-            });
-          } finally {
-            setAnonymizeLoading(false);
           }
         }}
       />
