@@ -1,6 +1,7 @@
 /**
- * Vigil — cloud (Vercel + Orthanc on VPS)
- * DICOMweb: /pacs/dicom-web (Vercel rewrite → Orthanc). Not Orthanc UI (/ui/app).
+ * Vigil — cloud (Vercel + Orthanc at orthanc.vigilhub.app)
+ * DICOMweb: /pacs/dicom-web → Vercel api/pacs proxy (auth server-side).
+ * Do NOT put Orthanc password here — set ORTHANC_PASSWORD on Vercel.
  */
 /** @type {AppTypes.Config} */
 window.config = {

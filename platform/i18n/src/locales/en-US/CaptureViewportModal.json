@@ -27,5 +27,12 @@
   "Height": "Height",
   "Save Image": "Save Image",
   "Image copied to clipboard": "Image copied to clipboard",
-  "Failed to copy image to clipboard": "Failed to copy image to clipboard"
+  "Failed to copy image to clipboard": "Failed to copy image to clipboard",
+  "Film sheet export": "Film sheet (all series images)",
+  "Film columns": "Columns",
+  "Film rows": "Rows",
+  "Film sheet hint": "Uses up to {{capacity}} images from the current series ({{total}} available). Exported as one DICOM/PDF/image.",
+  "Export viewport": "Export viewport",
+  "Layout export single": "Exports what is shown in the current viewer layout (single pane).",
+  "Layout export multi": "Exports all {{count}} images in the current layout ({{cols}}×{{rows}} grid), exactly as on screen."
 }

@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/pacs/:path*",
-      "destination": "http://35.242.134.20:8042/:path*"
+      "destination": "/api/pacs/:path*"
     },
     {
       "source": "/(.*)",

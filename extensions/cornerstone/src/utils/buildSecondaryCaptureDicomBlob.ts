@@ -56,7 +56,7 @@ function formatDicomTime(d: Date): string {
  */
 export function buildSecondaryCaptureDicomBlob(
   canvas: HTMLCanvasElement,
-  options: { source?: SourceDisplaySetLike | null } = {}
+  options: { source?: SourceDisplaySetLike | null; seriesDescription?: string } = {}
 ): Blob {
   const { columns, rows, pixelData } = canvasToRgbInterleaved(canvas);
   const { DicomMetaDictionary } = dcmjs.data;
@@ -96,7 +96,7 @@ export function buildSecondaryCaptureDicomBlob(
     Modality: 'OT',
     SeriesNumber: '999',
     InstanceNumber: '1',
-    SeriesDescription: 'OHIF viewport capture',
+    SeriesDescription: options.seriesDescription || 'OHIF viewport capture',
     Rows: rows,
     Columns: columns,
     SamplesPerPixel: 3,

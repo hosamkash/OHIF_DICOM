@@ -143,6 +143,21 @@ function commandsModule({
     return getViewportEnabledElement(viewportId);
   }
 
+  function _hasExportableCornerstoneViewports() {
+    const { viewports } = viewportGridService.getState();
+
+    for (const [viewportId, viewport] of viewports) {
+      if (
+        viewport.displaySetInstanceUIDs?.length &&
+        cornerstoneViewportService.getCornerstoneViewport(viewportId)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function _getActiveViewportToolGroupId() {
     const viewport = _getActiveViewportEnabledElement();
     const toolGroup = viewport && toolGroupService.getToolGroupForViewport(viewport.id);
@@ -1123,8 +1138,7 @@ function commandsModule({
     showDownloadViewportModal: () => {
       const { activeViewportId } = viewportGridService.getState();
 
-      if (!cornerstoneViewportService.getCornerstoneViewport(activeViewportId)) {
-        // Cannot download a non-cornerstone viewport (image).
+      if (!_hasExportableCornerstoneViewports()) {
         uiNotificationService.show({
           title: i18n.t('Tools:Download Image'),
           message: i18n.t('Tools:Image cannot be downloaded'),
@@ -1154,7 +1168,7 @@ function commandsModule({
     showDownloadViewportPdfModal: () => {
       const { activeViewportId } = viewportGridService.getState();
 
-      if (!cornerstoneViewportService.getCornerstoneViewport(activeViewportId)) {
+      if (!_hasExportableCornerstoneViewports()) {
         uiNotificationService.show({
           title: i18n.t('Tools:Download Image'),
           message: i18n.t('Tools:Image cannot be downloaded'),
@@ -1168,14 +1182,16 @@ function commandsModule({
       if (uiModalService) {
         uiModalService.show({
           content: CornerstoneViewportDownloadForm,
-          title: i18n.t('Tools:Export PDF'),
+          title: i18n.t('CaptureViewportModal:Export viewport', {
+            defaultValue: 'Export viewport',
+          }),
           contentProps: {
             activeViewportId,
             cornerstoneViewportService,
-            preferredFileFormats: ['pdf', 'png', 'jpg', 'dcm'],
+            preferredFileFormats: ['dcm', 'pdf', 'png', 'jpg'],
           },
           shouldCloseOnOverlayClick: false,
-          containerClassName: 'max-w-4xl p-4',
+          containerClassName: 'max-w-6xl w-[95vw] max-h-[92vh] overflow-y-auto p-4',
         });
       }
     },

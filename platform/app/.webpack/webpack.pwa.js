@@ -185,6 +185,11 @@ module.exports = (env, argv) => {
   });
 
   if (hasProxy) {
+    const proxyAuth =
+      process.env.ORTHANC_USERNAME && process.env.ORTHANC_PASSWORD
+        ? `${process.env.ORTHANC_USERNAME}:${process.env.ORTHANC_PASSWORD}`
+        : undefined;
+
     mergedConfig.devServer.proxy = [
       {
         context: ['/dicomweb'],
@@ -196,12 +201,16 @@ module.exports = (env, argv) => {
         context: ['/pacs'],
         target: PROXY_DOMAIN,
         changeOrigin: true,
+        secure: PROXY_DOMAIN.startsWith('https'),
         pathRewrite: { '^/pacs': '' },
+        auth: proxyAuth,
       },
       {
         context: ['/wado'],
         target: PROXY_DOMAIN,
         changeOrigin: true,
+        secure: PROXY_DOMAIN.startsWith('https'),
+        auth: proxyAuth,
       },
     ];
   }
