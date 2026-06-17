@@ -1,14 +1,9 @@
 /**
- * Vigil — one config file: localhost → proxy paths; production host → cloud Orthanc URL.
- * Dev: yarn dev:vigil:auto (needs Orthanc on :8042)
- * Build once for Vercel only if cloud URL is correct below; local dev still uses proxy paths.
+ * Vigil — local dev uses webpack proxy; production uses same-origin /pacs → orthanc.vigilhub.app.
  */
 (function () {
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
   const isLocal = host === 'localhost' || host === '127.0.0.1';
-
-  /** Cloud DICOMweb — edit to match tenant tab (Orthanc URL + /dicom-web) */
-  const CLOUD_ORTHANC_DICOMWEB = 'http://35.242.134.20:8042/dicom-web';
 
   const dicomWebRoots = isLocal
     ? {
@@ -17,9 +12,9 @@
         wadoRoot: '/pacs/dicom-web',
       }
     : {
-        wadoUriRoot: CLOUD_ORTHANC_DICOMWEB,
-        qidoRoot: CLOUD_ORTHANC_DICOMWEB,
-        wadoRoot: CLOUD_ORTHANC_DICOMWEB,
+        wadoUriRoot: '/pacs/wado',
+        qidoRoot: '/pacs/dicom-web',
+        wadoRoot: '/pacs/dicom-web',
       };
 
   /** @type {AppTypes.Config} */

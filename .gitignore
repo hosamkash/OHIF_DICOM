@@ -1,5 +1,7 @@
 # Packages
 node_modules
+.tmp.driveupload/
+.tmp.drivedownload/
 .cursor/
 .nyc_output/
 # Output
