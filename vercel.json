@@ -3,7 +3,7 @@
   "installCommand": "yarn install",
   "outputDirectory": "platform/app/dist",
   "functions": {
-    "api/pacs/[...path].js": {
+    "api/pacs.js": {
       "maxDuration": 60
     }
   },
@@ -16,21 +16,12 @@
           "value": "no-store"
         }
       ]
-    },
-    {
-      "source": "/api/pacs/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
     }
   ],
   "rewrites": [
     {
       "source": "/pacs/(.*)",
-      "destination": "/api/pacs/$1"
+      "destination": "/api/pacs?orthancPath=$1"
     },
     {
       "source": "/((?!api/|pacs/).*)",
