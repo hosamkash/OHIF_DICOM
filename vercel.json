@@ -2,13 +2,38 @@
   "buildCommand": "yarn build:vigil:cloud",
   "installCommand": "yarn install",
   "outputDirectory": "platform/app/dist",
-  "rewrites": [
+  "functions": {
+    "api/pacs/[...path].js": {
+      "maxDuration": 60
+    }
+  },
+  "headers": [
     {
-      "source": "/pacs/:path*",
-      "destination": "/api/pacs/:path*"
+      "source": "/pacs/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     },
     {
-      "source": "/(.*)",
+      "source": "/api/pacs/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/pacs/(.*)",
+      "destination": "/api/pacs/$1"
+    },
+    {
+      "source": "/((?!api/|pacs/).*)",
       "destination": "/index.html"
     }
   ]

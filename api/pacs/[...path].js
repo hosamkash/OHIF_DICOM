@@ -2,12 +2,6 @@
  * Vercel server-side proxy → https://orthanc.vigilhub.app
  * Credentials stay in Vercel env (ORTHANC_USERNAME / ORTHANC_PASSWORD), not in browser JS.
  */
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 function readBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -17,7 +11,7 @@ function readBody(req) {
   });
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   const user = process.env.ORTHANC_USERNAME || 'orthanc';
   const pass = process.env.ORTHANC_PASSWORD || '';
   const orthancBase = (process.env.ORTHANC_URL || 'https://orthanc.vigilhub.app').replace(/\/$/, '');
@@ -63,6 +57,7 @@ export default async function handler(req, res) {
       if (lower === 'transfer-encoding' || lower === 'connection') return;
       res.setHeader(key, value);
     });
+    res.setHeader('Cache-Control', 'no-store');
     const body = Buffer.from(await upstream.arrayBuffer());
     res.send(body);
   } catch (err) {
@@ -72,3 +67,10 @@ export default async function handler(req, res) {
     });
   }
 }
+
+module.exports = handler;
+module.exports.config = {
+  api: {
+    bodyParser: false,
+  },
+};
