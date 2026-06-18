@@ -1,6 +1,6 @@
 /**
  * Vercel server-side proxy → https://orthanc.vigilhub.app
- * Credentials stay in Vercel env (ORTHANC_USERNAME / ORTHANC_PASSWORD), not in browser JS.
+ * /pacs/* is rewritten here as ?orthancPath=... (catch-all folders need Next.js).
  */
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -23,19 +23,21 @@ async function handler(req, res) {
     return;
   }
 
-  const { path: pathSegments } = req.query;
-  const path = Array.isArray(pathSegments)
-    ? pathSegments.join('/')
-    : String(pathSegments || '');
+  const rawPath = req.query.orthancPath;
+  const path = Array.isArray(rawPath) ? rawPath.join('/') : String(rawPath || '').replace(/^\/+/, '');
 
-  const qsIndex = req.url.indexOf('?');
-  const qs = qsIndex >= 0 ? req.url.slice(qsIndex) : '';
-  const targetUrl = `${orthancBase}/${path}${qs}`;
+  if (!path) {
+    res.status(400).json({ error: 'Missing orthancPath (use /pacs/... or ?orthancPath=...)' });
+    return;
+  }
+
+  const qs = new URL(req.url || '/', 'http://localhost').searchParams;
+  qs.delete('orthancPath');
+  const queryString = qs.toString();
+  const targetUrl = `${orthancBase}/${path}${queryString ? `?${queryString}` : ''}`;
 
   const auth = `Basic ${Buffer.from(`${user}:${pass}`).toString('base64')}`;
-  const forwardHeaders = {
-    Authorization: auth,
-  };
+  const forwardHeaders = { Authorization: auth };
 
   if (req.headers.accept) forwardHeaders.Accept = req.headers.accept;
   if (req.headers['content-type']) forwardHeaders['Content-Type'] = req.headers['content-type'];
